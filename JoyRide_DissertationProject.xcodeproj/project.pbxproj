@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FAFEC05F2D2704F60062F90F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FAFEC05E2D2704F60062F90F /* FirebaseAuth */; };
+		FAFEC0612D2704F60062F90F /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = FAFEC0602D2704F60062F90F /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		FAFEC0412D21A1B30062F90F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FAFEC05F2D2704F60062F90F /* FirebaseAuth in Frameworks */,
+				FAFEC0612D2704F60062F90F /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = JoyRide_DissertationProject;
 			packageProductDependencies = (
+				FAFEC05E2D2704F60062F90F /* FirebaseAuth */,
+				FAFEC0602D2704F60062F90F /* FirebaseFirestore */,
 			);
 			productName = JoyRide_DissertationProject;
 			productReference = FAFEC0302D21A1B10062F90F /* JoyRide_DissertationProject.app */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = FAFEC0272D21A1B10062F90F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FAFEC05D2D2704AE0062F90F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FAFEC0312D21A1B10062F90F /* Products */;
 			projectDirPath = "";
@@ -554,6 +566,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FAFEC05D2D2704AE0062F90F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FAFEC05E2D2704F60062F90F /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FAFEC05D2D2704AE0062F90F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		FAFEC0602D2704F60062F90F /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FAFEC05D2D2704AE0062F90F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FAFEC0282D21A1B10062F90F /* Project object */;
 }

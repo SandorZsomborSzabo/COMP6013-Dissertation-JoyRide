@@ -44,7 +44,7 @@ struct ContentView: View {
                     selectedTab = .settings
                 }
             }
-            .frame(height: 75) // Height of the tab bar
+            .frame(height: 100) // Height of the tab bar
             .background(Color(UIColor.systemGray5))
             .border(Color.black, width: 1)
         }

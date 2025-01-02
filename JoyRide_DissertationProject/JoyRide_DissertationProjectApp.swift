@@ -11,7 +11,7 @@ import SwiftUI
 struct JoyRide_DissertationProjectApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            LoginRegisterView()
         }
     }
 }
