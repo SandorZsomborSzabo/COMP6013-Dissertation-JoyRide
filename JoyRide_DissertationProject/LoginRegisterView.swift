@@ -14,6 +14,8 @@ struct LoginRegisterView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var isAuthenticated = false // Tracks if the user is authenticated
+    @State private var showAlert = false // Tracks if the alert is shown
+    @State private var alertMessage = "" // Stores the alert message
 
     private static var database: OpaquePointer? = {
         let fileURL = try! FileManager.default
@@ -79,6 +81,9 @@ struct LoginRegisterView: View {
 
                 Spacer()
             }
+            .alert(isPresented: $showAlert) {
+                Alert(title: Text("Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+            }
         }
     }
 
@@ -125,7 +130,7 @@ struct LoginRegisterView: View {
                 .background(Color(UIColor.systemGray6))
                 .cornerRadius(5)
                 .border(Color.gray, width: 1)
-            Button(action: registerUser) {
+            Button(action: validateAndRegisterUser) {
                 Text("Register")
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -135,6 +140,15 @@ struct LoginRegisterView: View {
             }
         }
         .padding()
+    }
+
+    func validateAndRegisterUser() {
+        if email.isEmpty || username.isEmpty || password.isEmpty {
+            alertMessage = "All fields are required. Please fill in Email, Username, and Password."
+            showAlert = true
+        } else {
+            registerUser()
+        }
     }
 
     func authenticateUser() {
@@ -150,8 +164,14 @@ struct LoginRegisterView: View {
                 print("User authenticated successfully")
                 isAuthenticated = true
             } else {
+                alertMessage = "Invalid username or password. Please try again."
+                showAlert = true
                 print("Invalid login credentials")
             }
+        } else {
+            alertMessage = "Failed to execute login query. Please try again."
+            showAlert = true
+            print("Failed to prepare query")
         }
         sqlite3_finalize(statement)
     }
@@ -170,8 +190,14 @@ struct LoginRegisterView: View {
                 print("User registered successfully: \(username)")
                 isAuthenticated = true
             } else {
-                print("Failed to register user")
+                alertMessage = "Failed to register user. Please try again."
+                showAlert = true
+                print("Failed to insert user")
             }
+        } else {
+            alertMessage = "Failed to prepare registration query. Please try again."
+            showAlert = true
+            print("Failed to prepare insert statement")
         }
         sqlite3_finalize(statement)
     }
