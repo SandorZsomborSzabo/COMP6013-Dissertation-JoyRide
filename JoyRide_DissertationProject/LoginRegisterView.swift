@@ -11,13 +11,13 @@ import SQLite3
 struct LoginRegisterView: View {
     @State private var isLoginMode = true // Tracks whether the user is in login or register mode
     @State private var email = ""
-    @State private var username = ""
+    @State var username = ""
     @State private var password = ""
     @State private var isAuthenticated = false // Tracks if the user is authenticated
     @State private var showAlert = false // Tracks if the alert is shown
     @State private var alertMessage = "" // Stores the alert message
 
-    private static var database: OpaquePointer? = {
+    static var database: OpaquePointer? = {
         let fileURL = try! FileManager.default
             .url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
             .appendingPathComponent("UsersDatabase.sqlite")

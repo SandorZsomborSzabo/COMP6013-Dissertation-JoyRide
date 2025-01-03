@@ -11,6 +11,7 @@ import CoreLocation // Import CoreLocation for location services
 
 struct ContentView: View {
     @State private var selectedTab: AppTab = .home // Tracks the currently selected tab
+    @State private var isAuthenticated: Bool = true // Tracks authentication status
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,7 +24,7 @@ struct ContentView: View {
             case .social:
                 PlaceholderView(title: "Social")
             case .settings:
-                PlaceholderView(title: "Settings")
+                SettingsView(isAuthenticated: $isAuthenticated)
             }
 
             // Tab bar
@@ -197,6 +198,10 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
+
+
+
+
 
 
 
