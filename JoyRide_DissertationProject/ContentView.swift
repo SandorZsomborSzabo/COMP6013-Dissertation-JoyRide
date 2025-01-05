@@ -10,6 +10,7 @@ import MapKit
 import CoreLocation // Import CoreLocation for location services
 
 struct ContentView: View {
+    let username: String
     @State private var selectedTab: AppTab = .home // Tracks the currently selected tab
     @State private var isAuthenticated: Bool = true // Tracks authentication status
 
@@ -24,7 +25,7 @@ struct ContentView: View {
             case .social:
                 PlaceholderView(title: "Social")
             case .settings:
-                SettingsView(isAuthenticated: $isAuthenticated)
+                SettingsView(username: username, isAuthenticated: $isAuthenticated)
             }
 
             // Tab bar
@@ -195,7 +196,7 @@ struct PlaceholderView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(username: "PreviewUser")
     }
 }
 

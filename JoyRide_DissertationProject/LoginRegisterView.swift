@@ -30,9 +30,8 @@ struct LoginRegisterView: View {
         } else {
             let createTableQuery = """
             CREATE TABLE IF NOT EXISTS Users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT PRIMARY KEY, 
                 email TEXT,
-                username TEXT,
                 password TEXT
             );
             """
@@ -47,7 +46,7 @@ struct LoginRegisterView: View {
 
     var body: some View {
         if isAuthenticated {
-            ContentView() // Navigate to main app after authentication
+            ContentView(username: username) // Navigate to main app after authentication
         } else {
             VStack {
                 // Top buttons for switching modes
