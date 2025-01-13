@@ -95,7 +95,7 @@ struct SettingsView: View {
                 .background(Color.white)
                 .cornerRadius(12)
                 .shadow(radius: 6)
-                .padding(.horizontal, 40)  // So the popup isn't too wide
+                .padding(.horizontal, 40)  
             }
         }
     }
@@ -131,7 +131,6 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Preview
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView(
@@ -140,6 +139,3 @@ struct SettingsView_Previews: PreviewProvider {
         )
     }
 }
-
-
-

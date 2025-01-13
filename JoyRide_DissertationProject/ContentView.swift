@@ -23,7 +23,7 @@ struct ContentView: View {
             case .route:
                 PlaceholderView(title: "Route")
             case .social:
-                PlaceholderView(title: "Social")
+                SocialView()
             case .settings:
                 SettingsView(username: username, isAuthenticated: $isAuthenticated)
             }
