@@ -28,21 +28,39 @@ struct LoginRegisterView: View {
         if sqlite3_open(fileURL.path, &db) != SQLITE_OK {
             print("Failed to open database")
         } else {
-            let createTableQuery = """
+            // 1) Create Users table
+            let createUsersTable = """
             CREATE TABLE IF NOT EXISTS Users (
-                username TEXT PRIMARY KEY, 
+                username TEXT PRIMARY KEY,
                 email TEXT,
                 password TEXT
             );
             """
-            if sqlite3_exec(db, createTableQuery, nil, nil, nil) != SQLITE_OK {
-                print("Failed to create table")
+            if sqlite3_exec(db, createUsersTable, nil, nil, nil) != SQLITE_OK {
+                print("Failed to create Users table")
             } else {
-                print("Successfully created table or table already exists")
+                print("Successfully created/verified Users table")
+            }
+
+            // 2) Create Friends table
+            let createFriendsTable = """
+            CREATE TABLE IF NOT EXISTS Friends (
+                user1 TEXT NOT NULL,
+                user2 TEXT NOT NULL,
+                PRIMARY KEY(user1, user2),
+                FOREIGN KEY(user1) REFERENCES Users(username),
+                FOREIGN KEY(user2) REFERENCES Users(username)
+            );
+            """
+            if sqlite3_exec(db, createFriendsTable, nil, nil, nil) != SQLITE_OK {
+                print("Failed to create Friends table")
+            } else {
+                print("Successfully created/verified Friends table")
             }
         }
         return db
     }()
+
 
     var body: some View {
         if isAuthenticated {
