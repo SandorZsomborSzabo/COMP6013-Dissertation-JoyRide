@@ -99,12 +99,35 @@ struct SettingsView: View {
             }
         }
     }
+    
+    func setUserOnlineStatus(username: String, isOnline: Bool) {
+        guard let db = LoginRegisterView.database else { return }
+
+
+        let updateQuery = "UPDATE Users SET isOnline = ? WHERE username = ?;"
+        var statement: OpaquePointer? = nil
+
+        if sqlite3_prepare_v2(db, updateQuery, -1, &statement, nil) == SQLITE_OK {
+            // Convert Bool to Int: 1 or 0
+            sqlite3_bind_int(statement, 1, isOnline ? 1 : 0)
+            sqlite3_bind_text(statement, 2, (username as NSString).utf8String, -1, nil)
+
+            if sqlite3_step(statement) == SQLITE_DONE {
+                print("Updated isOnline = \(isOnline) for user \(username)")
+            } else {
+                print("Failed to update isOnline for user \(username)")
+            }
+        }
+        sqlite3_finalize(statement)
+    }
+
 
     // Log out action
     private func logOut() {
         isAuthenticated = false
         UIApplication.shared.windows.first?.rootViewController =
             UIHostingController(rootView: LoginRegisterView())
+        setUserOnlineStatus(username: username, isOnline: false)
     }
 
     private func deleteAccount(for username: String) {

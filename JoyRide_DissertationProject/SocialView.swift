@@ -14,8 +14,9 @@ struct SocialView: View {
     // The selected top tab: friends, groups, or discover
     @State private var selectedTab: SocialTab = .friends
     
-    // The list of friend usernames for the current user
-    @State private var friendList: [String] = []
+    // Instead of just storing friend usernames as [String],
+    // we store FriendInfo objects with username + isOnline.
+    @State private var friendList: [FriendInfo] = []
     
     // Text field for searching a username to add
     @State private var searchUsername: String = ""
@@ -55,7 +56,7 @@ struct SocialView: View {
         }
         .edgesIgnoringSafeArea(.bottom)
         .onAppear {
-            // Whenever this view appears, load the friend list from DB
+            // Load the friend list from DB whenever this view appears
             fetchFriends()
         }
         .alert(isPresented: $showAlert) {
@@ -71,8 +72,9 @@ struct SocialView: View {
     
     private var friendsSection: some View {
         VStack(spacing: 0) {
-            // Display how many friends the user has
-            Text("Active friends: \(friendList.count)")
+            // Display how many friends are online
+            let activeFriendCount = friendList.filter { $0.isOnline }.count
+            Text("Active friends: \(activeFriendCount)")
                 .font(.headline)
                 .padding()
                 .border(Color.black, width: 1)
@@ -90,13 +92,18 @@ struct SocialView: View {
             }
             
             // Show the user's friend list in a scrollable list
-            List(friendList, id: \.self) { friend in
+            // Each row shows username + "Online"/"Offline" + Chat button
+            List(friendList, id: \.username) { friend in
                 HStack {
-                    Text(friend) // The friend's username
+                    Text(friend.username)
+                    Text(friend.isOnline ? "(Online)" : "(Offline)")
+                        .foregroundColor(friend.isOnline ? .green : .red)
+                    
                     Spacer()
+                    
                     Button("Chat") {
                         // Chat action
-                        print("Chat with \(friend)")
+                        print("Chat with \(friend.username)")
                     }
                 }
             }
@@ -140,37 +147,62 @@ struct SocialView: View {
     
     // MARK: - Database Helpers
     
-    /// Fetch all friends of `currentUsername` from the Friends table
+    /// Fetch all friends of `currentUsername` from the Friends table,
+    /// along with their online/offline status from Users.
     private func fetchFriends() {
         guard let db = LoginRegisterView.database else { return }
         
-        // We want any row where the current user is user1 or user2
-        // We'll return the *other* username as "friendName"
+        // We'll join the `Friends` table with `Users` so we can get isOnline.
+        // We join the entire `Users` row of the "other" user (the friend).
+        // f.user1, f.user2 => the pair
+        // If f.user1 = current user, the friend is f.user2, and vice versa.
+        
         let query = """
-        SELECT CASE 
-            WHEN user1 = ? THEN user2 
-            ELSE user1 
-        END AS friendName
-        FROM Friends
-        WHERE user1 = ? OR user2 = ?;
+        SELECT 
+           CASE WHEN f.user1 = ? THEN f.user2 ELSE f.user1 END AS friendName,
+           u.isOnline
+        FROM Friends f
+        JOIN Users u
+          ON u.username = CASE WHEN f.user1 = ? THEN f.user2 ELSE f.user1 END
+        WHERE (f.user1 = ? OR f.user2 = ?);
         """
         
         var statement: OpaquePointer? = nil
         
+        // We'll bind `currentUsername` 4 times:
+        //  1) for the CASE logic
+        //  2) again for the CASE logic
+        //  3) for WHERE
+        //  4) for WHERE
         if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
+            // 1) friendName
             sqlite3_bind_text(statement, 1, (currentUsername as NSString).utf8String, -1, nil)
+            // 2) u.username
             sqlite3_bind_text(statement, 2, (currentUsername as NSString).utf8String, -1, nil)
+            // 3) WHERE f.user1 = ?
             sqlite3_bind_text(statement, 3, (currentUsername as NSString).utf8String, -1, nil)
+            // 4) WHERE f.user2 = ?
+            sqlite3_bind_text(statement, 4, (currentUsername as NSString).utf8String, -1, nil)
             
-            var fetched: [String] = []
+            var fetchedFriends: [FriendInfo] = []
             
             while sqlite3_step(statement) == SQLITE_ROW {
-                if let friendNameCStr = sqlite3_column_text(statement, 0) {
+                // friendName
+                let friendNameCStr = sqlite3_column_text(statement, 0)
+                // isOnline
+                let isOnlineInt = sqlite3_column_int(statement, 1)
+                
+                if let friendNameCStr = friendNameCStr {
                     let friendName = String(cString: friendNameCStr)
-                    fetched.append(friendName)
+                    let isOnline = (isOnlineInt == 1)
+                    
+                    fetchedFriends.append(
+                        FriendInfo(username: friendName, isOnline: isOnline)
+                    )
                 }
             }
-            friendList = fetched
+            
+            friendList = fetchedFriends
         } else {
             print("Failed to prepare fetchFriends statement")
         }
@@ -178,7 +210,7 @@ struct SocialView: View {
         sqlite3_finalize(statement)
     }
     
-    /// Add a friend, but only if that user exists in `Users`
+    /// Add a friend, but only if that user exists in the Users table
     private func addFriend(_ newFriend: String) {
         guard let db = LoginRegisterView.database else { return }
         
@@ -242,13 +274,19 @@ struct SocialView: View {
     }
 }
 
-// MARK: - Supporting Types
+// MARK: - Additional Types
 
 /// Which top tab is selected
 enum SocialTab {
     case friends
     case groups
     case discover
+}
+
+/// Basic struct to hold friend info
+struct FriendInfo {
+    let username: String
+    let isOnline: Bool
 }
 
 /// Basic tab button (reusing the one from ContentView is fine)

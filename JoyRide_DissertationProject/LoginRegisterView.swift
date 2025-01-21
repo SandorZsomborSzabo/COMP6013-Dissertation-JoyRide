@@ -33,13 +33,21 @@ struct LoginRegisterView: View {
             CREATE TABLE IF NOT EXISTS Users (
                 username TEXT PRIMARY KEY,
                 email TEXT,
-                password TEXT
+                password TEXT,
+                isOnline INT DEFAULT 0
             );
             """
             if sqlite3_exec(db, createUsersTable, nil, nil, nil) != SQLITE_OK {
                 print("Failed to create Users table")
             } else {
                 print("Successfully created/verified Users table")
+            }
+            
+            let addIsOnlineColumn = "ALTER TABLE Users ADD COLUMN isOnline INT DEFAULT 0;"
+            if sqlite3_exec(db, addIsOnlineColumn, nil, nil, nil) == SQLITE_OK {
+                print("Successfully added 'isOnline' column to Users table.")
+            } else {
+                print("Failed to add 'isOnline' column (maybe it already exists?)")
             }
 
             // 2) Create Friends table
@@ -167,6 +175,27 @@ struct LoginRegisterView: View {
             registerUser()
         }
     }
+    
+    func setUserOnlineStatus(username: String, isOnline: Bool) {
+        guard let db = Self.database else { return }
+
+        let updateQuery = "UPDATE Users SET isOnline = ? WHERE username = ?;"
+        var statement: OpaquePointer? = nil
+
+        if sqlite3_prepare_v2(db, updateQuery, -1, &statement, nil) == SQLITE_OK {
+            // Convert Bool to Int: 1 or 0
+            sqlite3_bind_int(statement, 1, isOnline ? 1 : 0)
+            sqlite3_bind_text(statement, 2, (username as NSString).utf8String, -1, nil)
+
+            if sqlite3_step(statement) == SQLITE_DONE {
+                print("Updated isOnline = \(isOnline) for user \(username)")
+            } else {
+                print("Failed to update isOnline for user \(username)")
+            }
+        }
+        sqlite3_finalize(statement)
+    }
+
 
     func authenticateUser() {
         guard let db = Self.database else { return }
@@ -180,6 +209,8 @@ struct LoginRegisterView: View {
             if sqlite3_step(statement) == SQLITE_ROW {
                 print("User authenticated successfully")
                 isAuthenticated = true
+                
+                setUserOnlineStatus(username: username, isOnline: true)
             } else {
                 alertMessage = "Invalid username or password. Please try again."
                 showAlert = true
