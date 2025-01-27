@@ -21,7 +21,7 @@ struct ContentView: View {
             case .home:
                 HomeView()
             case .route:
-                PlaceholderView(title: "Route")
+                RouteView()
             case .social:
                 SocialView(currentUsername: username)
             case .settings:
