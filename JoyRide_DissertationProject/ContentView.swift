@@ -116,13 +116,14 @@ struct HomeView: View {
 
             // Interactive Map with user location
             Map(coordinateRegion: $region, showsUserLocation: true)
-                .onAppear {
-                    if let location = locationManager.lastLocation {
-                        region.center = location.coordinate // Update region to user's location
-                    }
-                }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .border(Color.black, width: 1)
+                .onReceive(locationManager.$lastLocation) { newLocation in
+                    // Update the region whenever the user's location changes
+                    if let newLocation = newLocation {
+                        region.center = newLocation.coordinate
+                    }
+                }
         }
         .onAppear {
             locationManager.requestLocation() // Request user location
@@ -151,30 +152,73 @@ struct HomeView: View {
     }
 }
 
+    
+    // Function to get the current day of the week
+    func getDayOfWeek() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE" // Full name of the day
+        return formatter.string(from: Date())
+    }
+    
+    // Function to get the current date in MM/dd/yyyy format
+    func getCurrentDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM/dd/yyyy" // Format for the date
+        return formatter.string(from: Date())
+    }
+    
+    // Function to get the current time in HH:mm:ss format
+    func getCurrentTime() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss" // 24-hour format for time with seconds
+        return formatter.string(from: Date())
+    }
+
+
 // Location Manager to Handle User Location
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     @Published var lastLocation: CLLocation?
-
+    
     override init() {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
     }
-
+    
     func requestLocation() {
-        manager.requestWhenInUseAuthorization()
-        manager.startUpdatingLocation()
+        // Check the current authorisation status
+        let status = manager.authorizationStatus
+        
+        if status == .notDetermined {
+            // Request when-in-use authorisation if not determined
+            manager.requestWhenInUseAuthorization()
+        } else if status == .authorizedWhenInUse || status == .authorizedAlways {
+            // Start updating location if already authorised
+            manager.startUpdatingLocation()
+        } else {
+            print("Location permission not granted. Please enable it in Settings.")
+        }
     }
-
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            // Start updating location when authorised
+            manager.startUpdatingLocation()
+        } else if status == .denied || status == .restricted {
+            print("Location access denied. Please enable it in Settings.")
+        }
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         lastLocation = locations.last
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to find user’s location: \(error.localizedDescription)")
     }
 }
+
 
 // Placeholder View for other tabs
 struct PlaceholderView: View {

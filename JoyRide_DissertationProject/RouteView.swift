@@ -6,52 +6,102 @@
 //
 
 import SwiftUI
-import MapKit
-import CoreLocation
+import GoogleMaps
+import GoogleMapsUtils
+import GooglePlaces
 
-/// Wrap CLLocationCoordinate2D so it can be used in `annotationItems:`
-struct IdentifiableCoordinate: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
-}
-
-class RouteLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let manager = CLLocationManager()
-    @Published var lastLocation: CLLocation?
-
+/// **ViewModel for Google Maps Navigation**
+class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let locationManager = CLLocationManager()
+    @Published var userLocation: CLLocationCoordinate2D?
+    @Published var isNavigating = false
+    @Published var polyline: GMSPolyline?
+    
     override init() {
         super.init()
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
-
-    func requestLocation() {
-        manager.requestWhenInUseAuthorization()
-        manager.startUpdatingLocation()
+    
+    func requestPermission() {
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
     }
-
+    
+    func startNavigation(to destination: CLLocationCoordinate2D, on mapView: GMSMapView) {
+        guard let userLocation = userLocation else {
+            print("User location not available.")
+            return
+        }
+        
+        let origin = "\(userLocation.latitude),\(userLocation.longitude)"
+        let dest = "\(destination.latitude),\(destination.longitude)"
+        
+        // Replace with your real Google Directions API key
+        let urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=\(origin)&destination=\(dest)&mode=driving&key=AIzaSyCR4UzC0O1xZRP2Jf8A6LIShdThU4Znir0"
+        
+        guard let url = URL(string: urlString) else {
+            print("Invalid Google Directions API URL.")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            if let error = error {
+                print("Error fetching directions: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            do {
+                let result = try JSONDecoder().decode(GoogleDirectionsResponse.self, from: data)
+                
+                // Check if the API request was successful
+                guard result.status == "OK", let route = result.routes?.first else {
+                    print("Directions API error: \(result.status)")
+                    return
+                }
+                
+                // Proceed with the valid route
+                let overviewPolyline = route.overviewPolyline.points
+                
+                DispatchQueue.main.async {
+                    let path = GMSPath(fromEncodedPath: overviewPolyline)
+                    self.polyline = GMSPolyline(path: path)
+                    self.polyline?.strokeColor = .blue
+                    self.polyline?.strokeWidth = 5
+                    self.polyline?.map = mapView
+                    self.isNavigating = true
+                }
+            } catch {
+                print("Failed to decode directions response: \(error.localizedDescription)")
+            }
+        }.resume()
+    }
+    
+    func stopNavigation() {
+        DispatchQueue.main.async {
+            self.polyline?.map = nil
+            self.isNavigating = false
+        }
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        lastLocation = locations.last
+        userLocation = locations.last?.coordinate
     }
-
+    
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Failed to find user’s location: \(error.localizedDescription)")
+        print("Failed to get location: \(error.localizedDescription)")
     }
 }
 
+/// **SwiftUI View for Route Navigation**
 struct RouteView: View {
-    @StateObject private var locationManager = LocationManager()
-
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
+    @StateObject private var navManager = GoogleNavigationManager()
+    @State private var mapView = GMSMapView()
     @State private var selectedTime: Int = 30
-    @State private var routeCoordinates: [CLLocationCoordinate2D] = []
+    @State private var destination: CLLocationCoordinate2D?
     
-    // We keep the annotation items in an array of IdentifiableCoordinate
-    @State private var annotationItems: [IdentifiableCoordinate] = []
-
     var body: some View {
         VStack {
             Picker("Trip Duration", selection: $selectedTime) {
@@ -60,104 +110,97 @@ struct RouteView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding()
-
-            Button("Generate Round Trip") {
-                generateRoundTrip()
+            
+            HStack {
+                Button("Generate Route") {
+                    generateRoute()
+                }
+                .padding()
+                
+                Button(navManager.isNavigating ? "Stop Navigation" : "Start Navigation") {
+                    if navManager.isNavigating {
+                        navManager.stopNavigation()
+                    } else if let destination = destination {
+                        navManager.startNavigation(to: destination, on: mapView)
+                    }
+                }
+                .padding()
+                .background(navManager.isNavigating ? Color.red : Color.green)
+                .foregroundColor(.white)
+                .cornerRadius(8)
             }
-            .padding()
-
-            // Use annotationItems array:
-            Map(coordinateRegion: $region,
-                showsUserLocation: true,
-                annotationItems: annotationItems
-            ) { item in
-                MapMarker(coordinate: item.coordinate, tint: .blue)
-            }
-            .overlay(
-                // Just a placeholder overlay showing how many route points we have
-                Text("Route has \(routeCoordinates.count) points.")
-                    .foregroundColor(.red)
-                    .padding(),
-                alignment: .top
-            )
-            .edgesIgnoringSafeArea(.bottom)
-        }
-        .onAppear {
-            locationManager.requestLocation()
+            
+            GoogleMapView(mapView: $mapView, userLocation: $navManager.userLocation)
+                .edgesIgnoringSafeArea(.bottom)
+                .onAppear {
+                    navManager.requestPermission()
+                }
         }
     }
-
-    private func generateRoundTrip() {
-        guard let userLocation = locationManager.lastLocation else {
-            print("No user location available yet.")
+    
+    private func generateRoute() {
+        guard let userLocation = navManager.userLocation else {
+            print("User location not available yet.")
             return
         }
-
-        // We'll do a basic approach as in the previous example.
-        // This is purely to show how to fix the Identifiable requirement.
-
-        // 1) Suppose we just want to place a "destination" 1 mile away for demo
+        
         let milesAway = (selectedTime == 30) ? 5.0 : 10.0
-        let destination = randomCoordinate(from: userLocation.coordinate, withinMiles: milesAway)
-
-        // For demo, let's just store these two points as "annotations"
-        annotationItems = [
-            IdentifiableCoordinate(coordinate: userLocation.coordinate),
-            IdentifiableCoordinate(coordinate: destination)
-        ]
-        
-        // We'll skip actual route logic for brevity, or you can do your MKDirections request here
-        routeCoordinates = [userLocation.coordinate, destination]
-        
-        // Optionally recenter the map
-        region = regionThatFitsAll(coords: routeCoordinates)
+        let randomDest = randomCoordinate(from: userLocation, withinMiles: milesAway)
+        destination = randomDest
     }
-
-    // Helper to produce a random coordinate ~X miles from origin
+    
     private func randomCoordinate(from origin: CLLocationCoordinate2D, withinMiles distanceMiles: Double) -> CLLocationCoordinate2D {
-        // ... same logic from the earlier example ...
         let distanceMeters = distanceMiles * 1609.34
         let bearing = Double.random(in: 0..<360) * .pi / 180
         let earthRadius: Double = 6378137
         let angularDistance = distanceMeters / earthRadius
-
+        
         let lat1 = origin.latitude * .pi / 180
         let lon1 = origin.longitude * .pi / 180
-
+        
         let lat2 = asin(sin(lat1) * cos(angularDistance)
                         + cos(lat1) * sin(angularDistance) * cos(bearing))
         let lon2 = lon1 + atan2(sin(bearing) * sin(angularDistance) * cos(lat1),
                                 cos(angularDistance) - sin(lat1) * sin(lat2))
-
+        
         return CLLocationCoordinate2D(latitude: lat2 * 180 / .pi,
                                       longitude: lon2 * 180 / .pi)
     }
+}
 
-    private func regionThatFitsAll(coords: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
-        guard !coords.isEmpty else { return region }
-        
-        var minLat = coords[0].latitude
-        var maxLat = coords[0].latitude
-        var minLon = coords[0].longitude
-        var maxLon = coords[0].longitude
-        
-        for c in coords {
-            if c.latitude < minLat { minLat = c.latitude }
-            if c.latitude > maxLat { maxLat = c.latitude }
-            if c.longitude < minLon { minLon = c.longitude }
-            if c.longitude > maxLon { maxLon = c.longitude }
+/// **Google Maps UIView Wrapper for SwiftUI**
+struct GoogleMapView: UIViewRepresentable {
+    @Binding var mapView: GMSMapView
+    @Binding var userLocation: CLLocationCoordinate2D?
+    
+    func makeUIView(context: Context) -> GMSMapView {
+        mapView.settings.myLocationButton = true
+        mapView.isMyLocationEnabled = true
+        return mapView
+    }
+    
+    func updateUIView(_ mapView: GMSMapView, context: Context) {
+        if let userLocation = userLocation {
+            let camera = GMSCameraPosition.camera(withLatitude: userLocation.latitude, longitude: userLocation.longitude, zoom: 14)
+            mapView.camera = camera
         }
-        
-        let spanLat = maxLat - minLat
-        let spanLon = maxLon - minLon
-        
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
-        )
-        let span = MKCoordinateSpan(latitudeDelta: spanLat * 1.4, longitudeDelta: spanLon * 1.4)
-        
-        return MKCoordinateRegion(center: center, span: span)
     }
 }
 
+/// **Google Directions API Response**
+struct GoogleDirectionsResponse: Codable {
+    let routes: [Route]?
+    let status: String
+}
+
+struct Route: Codable {
+    let overviewPolyline: OverviewPolyline
+    
+    enum CodingKeys: String, CodingKey {
+        case overviewPolyline = "overview_polyline"
+    }
+}
+
+struct OverviewPolyline: Codable {
+    let points: String
+}
