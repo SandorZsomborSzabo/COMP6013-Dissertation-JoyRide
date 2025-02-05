@@ -17,7 +17,6 @@ module GoogleMaps {
   link framework "CoreVideo"
   link framework "Foundation"
   link framework "GLKit"
-  link framework "IOSurface"
   link framework "ImageIO"
   link framework "Metal"
   link framework "OSLog"

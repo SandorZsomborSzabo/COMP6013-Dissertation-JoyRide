@@ -67,11 +67,11 @@ NS_SWIFT_NAME(MutableFeatureStyle)
 
 @end
 
-/** Value to use for `strokeWidth` parameter when the stroke width should be unchanged. */
+/** Value to use for @c strokeWidth parameter when the stroke width should be unchanged. */
 FOUNDATION_EXTERN const CGFloat
     GMSFeatureStyleStrokeWidthUnspecified NS_SWIFT_NAME(FeatureStyle.strokeWidthUnspecified);
 
-/** Value to use for `pointRadius` parameter when the point radius should be unchanged. */
+/** Value to use for @c pointRadius parameter when the point radius should be unchanged. */
 FOUNDATION_EXTERN const CGFloat
     GMSFeatureStylePointRadiusUnspecified NS_SWIFT_NAME(FeatureStyle.pointRadiusUnspecified);
 

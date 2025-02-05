@@ -26,7 +26,7 @@ NS_SWIFT_NAME(PlaceFeature)
 /**
  * Create a feature layer instance for testing.
  *
- * This method should be used for your unit tests only. In production, `GMSPlaceFeature` instances
+ * This method should be used for your unit tests only. In production, @c GMSPlaceFeature instances
  * should only be created by the SDK.
  */
 - (instancetype)initWithFeatureType:(GMSFeatureType)featureType placeID:(NSString *)placeID;

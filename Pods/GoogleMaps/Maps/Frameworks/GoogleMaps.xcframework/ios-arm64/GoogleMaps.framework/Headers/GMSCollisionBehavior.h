@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * How markers interact with other markers and regular labels. Defaults to
- * `GMSCollisionBehaviorRequired`.
+ * @c GMSCollisionBehaviorRequired.
  *
  * Marker collisions occur when coordinates intersect.
  *
@@ -47,7 +47,7 @@ typedef NS_ENUM(NSInteger, GMSCollisionBehavior) {
 
   /**
    * Display the marker only if it does not overlap with other markers. Does not include
-   * `GMSCollisionBehaviorRequired`. If two markers of this type would overlap, the one with the
+   * GMSCollisionBehaviorRequired. If two markers of this type would overlap, the one with the
    * higher zIndex is shown. Collision rules for markers with the same zIndex is undefined.
    */
   GMSCollisionBehaviorOptionalAndHidesLowerPriority,

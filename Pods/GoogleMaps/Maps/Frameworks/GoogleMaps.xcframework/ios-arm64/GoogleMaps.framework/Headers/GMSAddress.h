@@ -10,14 +10,18 @@
 
 #import <CoreLocation/CoreLocation.h>
 
-#import "GMSDeprecationMacros.h"
+#if __has_feature(modules)
+@import GoogleMapsBase;
+#else
+#import <GoogleMapsBase/GoogleMapsBase.h>
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
  * A result from a reverse geocode request, containing a human-readable address. This class is
  * immutable and should not be instantiated directly unless under testing circumstances. Obtain an
- * instance via `GMSGeocoder`.
+ * instance via GMSGeocoder.
  *
  * Some of the fields may be nil, indicating they are not present.
  */
@@ -44,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 /** The country name. */
 @property(nonatomic, copy, readonly, nullable) NSString *country;
 
-/** An array of `NSString` containing formatted lines of the address. May be nil. */
+/** An array of NSString containing formatted lines of the address. May be nil. */
 @property(nonatomic, copy, readonly, nullable) NSArray<NSString *> *lines;
 
 /** Returns the first line of the address. */

@@ -16,7 +16,7 @@
 /**
  * An interface representing a feature layer for a dataset.
  *
- * The featureType of a `GMSDatasetFeatureLayer` will always be `GMSFeatureTypeDataset`.
+ * The featureType of a @c GMSDatasetFeatureLayer will always be @c GMSFeatureTypeDataset.
  */
 NS_SWIFT_NAME(DatasetFeatureLayer)
 @interface GMSDatasetFeatureLayer : GMSFeatureLayer <GMSDatasetFeature *>

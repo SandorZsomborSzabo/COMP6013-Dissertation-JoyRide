@@ -25,8 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Returns a glyph model with the given text.
  *
- * @param text A `NSString` object to use as the glyph.
- * @param textColor A `UIColor` object to use to render the text.
+ * @param text A @c NSString object to use as the glyph.
+ * @param textColor A @c UIColor object to use to render the text.
  * @return An initialized glyph model.
  */
 - (GMSPinImageGlyph *)initWithText:(NSString *)text textColor:(UIColor *)textColor;
@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Returns a glyph model with the given text.
  *
- * @param image A `UIImage` object to use as the glyph.
+ * @param image A @c UIImage object to use as the glyph.
  * @return An initialized glyph model.
  */
 - (GMSPinImageGlyph *)initWithImage:(UIImage *)image;
@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Returns a glyph model with the given glyph color.
  *
- * @param glyphColor A `UIColor` object to use to render the glyph.
+ * @param glyphColor A @c UIColor object to use to render the glyph.
  * @return An initialized glyph model.
  */
 - (GMSPinImageGlyph *)initWithGlyphColor:(UIColor *)glyphColor;

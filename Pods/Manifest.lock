@@ -1,27 +1,35 @@
 PODS:
   - Google-Maps-iOS-Utils (6.1.0):
     - GoogleMaps (~> 9.0)
-  - GoogleMaps (9.3.0):
-    - GoogleMaps/Maps (= 9.3.0)
-  - GoogleMaps/Maps (9.3.0)
+  - GoogleMaps (9.1.1):
+    - GoogleMaps/Maps (= 9.1.1)
+  - GoogleMaps/Base (9.1.1)
+  - GoogleMaps/Maps (9.1.1):
+    - GoogleMaps/Base
+  - GoogleNavigation (9.1.1):
+    - GoogleMaps (= 9.1.1)
   - GooglePlaces (9.3.0)
 
 DEPENDENCIES:
   - Google-Maps-iOS-Utils
-  - GoogleMaps
+  - GoogleMaps (= 9.1.1)
+  - GoogleNavigation (= 9.1.1)
   - GooglePlaces
 
 SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - GoogleMaps
+    - GoogleNavigation
   trunk:
     - Google-Maps-iOS-Utils
-    - GoogleMaps
     - GooglePlaces
 
 SPEC CHECKSUMS:
   Google-Maps-iOS-Utils: 0a484b05ed21d88c9f9ebbacb007956edd508a96
-  GoogleMaps: b58e9627004f47043897eeae830c3ef023678f3b
+  GoogleMaps: 80ea184ed6bf44139f383a8b0e248ba3ec1cc8c9
+  GoogleNavigation: d87408ca2532ee48e76edd47b42beb296b0b2398
   GooglePlaces: 310d8c240eb4bf7aaeecec0de71fe75d086dbf4a
 
-PODFILE CHECKSUM: 6a158f1caa386a2e76be80df9d1c4f75fd6777b2
+PODFILE CHECKSUM: 7427788e80c964a6a55634b1b5e0b67a68e289d3
 
 COCOAPODS: 1.16.2

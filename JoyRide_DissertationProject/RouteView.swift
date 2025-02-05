@@ -9,12 +9,83 @@ import SwiftUI
 import GoogleMaps
 import GoogleMapsUtils
 import GooglePlaces
+import AVFoundation   // For spoken instructions
+import CoreLocation
+// Import the Navigation SDK module – ensure your project is configured to use it.
+import GoogleNavigation
 
-/// **ViewModel for Google Maps Navigation**
+// MARK: - GoogleDirectionsResponse Models
+// (Retained for backwards compatibility; not used with the Navigation SDK.)
+struct GoogleDirectionsResponse: Codable {
+    let routes: [Route]?
+    let status: String
+}
+
+struct Route: Codable {
+    let legs: [Leg]?
+    let overviewPolyline: OverviewPolyline
+    
+    enum CodingKeys: String, CodingKey {
+        case legs
+        case overviewPolyline = "overview_polyline"
+    }
+}
+
+struct Leg: Codable {
+    let steps: [Step]?
+    let startLocation: Coordinate?
+    let endLocation: Coordinate?
+    
+    enum CodingKeys: String, CodingKey {
+        case steps
+        case startLocation = "start_location"
+        case endLocation = "end_location"
+    }
+}
+
+struct Step: Codable {
+    let htmlInstructions: String?
+    let distance: Value?
+    let duration: Value?
+    let startLocation: Coordinate?
+    let endLocation: Coordinate?
+    let polyline: OverviewPolyline?
+    
+    enum CodingKeys: String, CodingKey {
+        case htmlInstructions = "html_instructions"
+        case distance
+        case duration
+        case startLocation = "start_location"
+        case endLocation = "end_location"
+        case polyline
+    }
+}
+
+struct Value: Codable {
+    let text: String
+    let value: Int
+}
+
+struct Coordinate: Codable {
+    let lat: Double
+    let lng: Double
+}
+
+struct OverviewPolyline: Codable {
+    let points: String
+}
+
+// MARK: - GoogleNavigationManager (using Navigation SDK)
 class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
+    
+    // Published properties used by SwiftUI
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var isNavigating = false
+    
+    // The following properties are retained from your previous implementation.
+    @Published var steps: [Step] = []
+    @Published var currentStepIndex: Int = 0
     @Published var polyline: GMSPolyline?
     
     override init() {
@@ -23,79 +94,94 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
     
+    // MARK: - Location Authorisation
     func requestPermission() {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
     
+    // MARK: - Start Navigation using the Navigation SDK
     func startNavigation(to destination: CLLocationCoordinate2D, on mapView: GMSMapView) {
-        guard let userLocation = userLocation else {
-            print("User location not available.")
+        // Unwrap the optional waypoint
+        guard let waypoint = GMSNavigationWaypoint(location: destination, title: "Destination") else {
+            print("Failed to create navigation waypoint.")
             return
         }
+        let destinations = [waypoint]
         
-        let origin = "\(userLocation.latitude),\(userLocation.longitude)"
-        let dest = "\(destination.latitude),\(destination.longitude)"
-        
-        // Replace with your real Google Directions API key
-        let urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=\(origin)&destination=\(dest)&mode=driving&key=AIzaSyCR4UzC0O1xZRP2Jf8A6LIShdThU4Znir0"
-        
-        guard let url = URL(string: urlString) else {
-            print("Invalid Google Directions API URL.")
-            return
-        }
-        
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let error = error {
-                print("Error fetching directions: \(error.localizedDescription)")
+        // Set the destinations; the Navigation SDK will calculate the route.
+        mapView.navigator?.setDestinations(destinations) { routeStatus in
+            guard routeStatus == .OK else {
+                print("Route error: \(routeStatus)")
                 return
             }
             
-            guard let data = data else { return }
+            // Activate guidance mode to start turn-by-turn navigation.
+            mapView.navigator?.isGuidanceActive = true
             
-            do {
-                let result = try JSONDecoder().decode(GoogleDirectionsResponse.self, from: data)
-                
-                // Check if the API request was successful
-                guard result.status == "OK", let route = result.routes?.first else {
-                    print("Directions API error: \(result.status)")
-                    return
-                }
-                
-                // Proceed with the valid route
-                let overviewPolyline = route.overviewPolyline.points
-                
-                DispatchQueue.main.async {
-                    let path = GMSPath(fromEncodedPath: overviewPolyline)
-                    self.polyline = GMSPolyline(path: path)
-                    self.polyline?.strokeColor = .blue
-                    self.polyline?.strokeWidth = 5
-                    self.polyline?.map = mapView
-                    self.isNavigating = true
-                }
-            } catch {
-                print("Failed to decode directions response: \(error.localizedDescription)")
+            // Set the camera mode to following for a third-person view.
+            mapView.cameraMode = .following
+            
+            DispatchQueue.main.async {
+                self.isNavigating = true
             }
-        }.resume()
+        }
     }
-    
-    func stopNavigation() {
+
+    // MARK: - Stop Navigation using the Navigation SDK
+    func stopNavigation(on mapView: GMSMapView) {
+        // Deactivate guidance mode
+        mapView.navigator?.isGuidanceActive = false
+        
+        // Revert camera mode to free, which gives control back to the user.
+        mapView.cameraMode = .free
+        
         DispatchQueue.main.async {
-            self.polyline?.map = nil
             self.isNavigating = false
+            // Clear any leftover polyline or step data (if applicable)
+            self.polyline?.map = nil
+            self.polyline = nil
+            self.steps = []
+            self.currentStepIndex = 0
         }
     }
     
+    // MARK: - CLLocationManagerDelegate Methods
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         userLocation = locations.last?.coordinate
+        // Additional location tracking logic can be added here.
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to get location: \(error.localizedDescription)")
     }
+    
 }
 
-/// **SwiftUI View for Route Navigation**
+// MARK: - GoogleMapView (SwiftUI Wrapper)
+struct GoogleMapView: UIViewRepresentable {
+    @Binding var mapView: GMSMapView
+    @Binding var userLocation: CLLocationCoordinate2D?
+    
+    func makeUIView(context: Context) -> GMSMapView {
+        mapView.settings.myLocationButton = true
+        mapView.isMyLocationEnabled = true
+        return mapView
+    }
+    
+    func updateUIView(_ mapView: GMSMapView, context: Context) {
+        if let userLocation = userLocation {
+            let camera = GMSCameraPosition.camera(
+                withLatitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+                zoom: 14
+            )
+            mapView.animate(to: camera)
+        }
+    }
+}
+
+// MARK: - Main SwiftUI View
 struct RouteView: View {
     @StateObject private var navManager = GoogleNavigationManager()
     @State private var mapView = GMSMapView()
@@ -104,6 +190,7 @@ struct RouteView: View {
     
     var body: some View {
         VStack {
+            // Picker for choosing route duration/distance
             Picker("Trip Duration", selection: $selectedTime) {
                 Text("30 Min").tag(30)
                 Text("60 Min").tag(60)
@@ -111,6 +198,7 @@ struct RouteView: View {
             .pickerStyle(SegmentedPickerStyle())
             .padding()
             
+            // Buttons for generating a route and starting/stopping navigation
             HStack {
                 Button("Generate Route") {
                     generateRoute()
@@ -119,7 +207,7 @@ struct RouteView: View {
                 
                 Button(navManager.isNavigating ? "Stop Navigation" : "Start Navigation") {
                     if navManager.isNavigating {
-                        navManager.stopNavigation()
+                        navManager.stopNavigation(on: mapView)
                     } else if let destination = destination {
                         navManager.startNavigation(to: destination, on: mapView)
                     }
@@ -130,23 +218,56 @@ struct RouteView: View {
                 .cornerRadius(8)
             }
             
+            // Display the Google Map
             GoogleMapView(mapView: $mapView, userLocation: $navManager.userLocation)
                 .edgesIgnoringSafeArea(.bottom)
                 .onAppear {
+                    // Present T&C on first appearance
+                    let companyName = "Your Company Name"
+                    GMSNavigationServices.showTermsAndConditionsDialogIfNeeded(withCompanyName: companyName) { accepted in
+                        if accepted {
+                            print("User accepted the Navigation Terms and Conditions.")
+                            // Enable navigation once user accepts T&C
+                            mapView.isNavigationEnabled = true
+                        } else {
+                            print("User did not accept the Navigation Terms and Conditions.")
+                            // Handle rejection if needed
+                            mapView.isNavigationEnabled = false
+                        }
+                    }
+                    
                     navManager.requestPermission()
                 }
         }
+        // Optional overlay to show current navigation state
+        .overlay(
+            VStack {
+                if navManager.isNavigating {
+                    Text("Navigating...")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                }
+            }
+            .padding()
+            .background(Color.black.opacity(0.7))
+            .cornerRadius(8)
+            .padding(),
+            alignment: .top
+        )
     }
     
+    // MARK: - Generate a Random Destination
     private func generateRoute() {
         guard let userLocation = navManager.userLocation else {
             print("User location not available yet.")
             return
         }
         
+        // Estimate distance based on selected duration:
+        // 30 minutes ~ 5 miles, 60 minutes ~ 10 miles.
         let milesAway = (selectedTime == 30) ? 5.0 : 10.0
-        let randomDest = randomCoordinate(from: userLocation, withinMiles: milesAway)
-        destination = randomDest
+        destination = randomCoordinate(from: userLocation, withinMiles: milesAway)
     }
     
     private func randomCoordinate(from origin: CLLocationCoordinate2D, withinMiles distanceMiles: Double) -> CLLocationCoordinate2D {
@@ -163,44 +284,16 @@ struct RouteView: View {
         let lon2 = lon1 + atan2(sin(bearing) * sin(angularDistance) * cos(lat1),
                                 cos(angularDistance) - sin(lat1) * sin(lat2))
         
-        return CLLocationCoordinate2D(latitude: lat2 * 180 / .pi,
-                                      longitude: lon2 * 180 / .pi)
+        return CLLocationCoordinate2D(
+            latitude: lat2 * 180 / .pi,
+            longitude: lon2 * 180 / .pi
+        )
     }
 }
 
-/// **Google Maps UIView Wrapper for SwiftUI**
-struct GoogleMapView: UIViewRepresentable {
-    @Binding var mapView: GMSMapView
-    @Binding var userLocation: CLLocationCoordinate2D?
-    
-    func makeUIView(context: Context) -> GMSMapView {
-        mapView.settings.myLocationButton = true
-        mapView.isMyLocationEnabled = true
-        return mapView
+// MARK: - Preview
+struct RouteView_Previews: PreviewProvider {
+    static var previews: some View {
+        RouteView()
     }
-    
-    func updateUIView(_ mapView: GMSMapView, context: Context) {
-        if let userLocation = userLocation {
-            let camera = GMSCameraPosition.camera(withLatitude: userLocation.latitude, longitude: userLocation.longitude, zoom: 14)
-            mapView.camera = camera
-        }
-    }
-}
-
-/// **Google Directions API Response**
-struct GoogleDirectionsResponse: Codable {
-    let routes: [Route]?
-    let status: String
-}
-
-struct Route: Codable {
-    let overviewPolyline: OverviewPolyline
-    
-    enum CodingKeys: String, CodingKey {
-        case overviewPolyline = "overview_polyline"
-    }
-}
-
-struct OverviewPolyline: Codable {
-    let points: String
 }

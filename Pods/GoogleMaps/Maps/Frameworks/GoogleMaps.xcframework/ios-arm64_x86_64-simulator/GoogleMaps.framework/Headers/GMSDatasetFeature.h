@@ -17,7 +17,7 @@ NS_SWIFT_NAME(DatasetFeature)
 /**
  * An interface representing a feature from a dataset.
  *
- * The featureType of a DatasetFeature will always be `GMSFeatureTypeDataset`.
+ * The featureType of a DatasetFeature will always be @c GMSFeatureTypeDataset.
  */
 @interface GMSDatasetFeature : NSObject <GMSFeature>
 
@@ -30,8 +30,8 @@ NS_SWIFT_NAME(DatasetFeature)
 /**
  * Create a dataset feature instance for testing uses.
  *
- * This method should be used for testing purposes only; `GMSDatasetFeature` instances should only
- * be created by the SDK in production code.
+ * This method should be used for testing purposes only; GMSDatasetFeature instances should only be
+ * created by the SDK in production code.
  */
 - (instancetype)initWithDatasetID:(NSString *)datasetID
                 datasetAttributes:(NSDictionary<NSString *, NSString *> *)datasetAttributes
