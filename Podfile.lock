@@ -9,17 +9,20 @@ PODS:
   - GoogleNavigation (9.1.1):
     - GoogleMaps (= 9.1.1)
   - GooglePlaces (9.3.0)
+  - SSZipArchive (2.4.3)
 
 DEPENDENCIES:
   - Google-Maps-iOS-Utils
   - GoogleMaps (= 9.1.1)
   - GoogleNavigation (= 9.1.1)
   - GooglePlaces
+  - SSZipArchive
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
     - GoogleMaps
     - GoogleNavigation
+    - SSZipArchive
   trunk:
     - Google-Maps-iOS-Utils
     - GooglePlaces
@@ -29,7 +32,8 @@ SPEC CHECKSUMS:
   GoogleMaps: 80ea184ed6bf44139f383a8b0e248ba3ec1cc8c9
   GoogleNavigation: d87408ca2532ee48e76edd47b42beb296b0b2398
   GooglePlaces: 310d8c240eb4bf7aaeecec0de71fe75d086dbf4a
+  SSZipArchive: fe6a26b2a54d5a0890f2567b5cc6de5caa600aef
 
-PODFILE CHECKSUM: 7427788e80c964a6a55634b1b5e0b67a68e289d3
+PODFILE CHECKSUM: 752e7688f1fa6216ca3323f04e87fa091c46fef8
 
 COCOAPODS: 1.16.2

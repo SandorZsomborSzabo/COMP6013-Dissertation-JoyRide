@@ -9,4 +9,6 @@ target 'JoyRide_DissertationProject' do
   pod 'GooglePlaces'
   pod 'Google-Maps-iOS-Utils'
   pod 'GoogleNavigation', '9.1.1'
+  pod 'SSZipArchive'
+
 end

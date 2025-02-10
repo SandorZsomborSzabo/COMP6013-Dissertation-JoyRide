@@ -1,5 +1,5 @@
 {
-  "originHash" : "c5bd83a0a80752c1fe01c4c9a909705707dbdc0c65b7065b2762bc89ca9283a4",
+  "originHash" : "1544e34bcda741d1cc6896a754ad0ecbf39a1e3e950d9c88454a4a18b7bd566e",
   "pins" : [
     {
       "identity" : "mapbox-common-ios",
@@ -98,6 +98,15 @@
       "state" : {
         "revision" : "b444594f79844b0d6d76d70fbfb3f7f71728f938",
         "version" : "1.5.1"
+      }
+    },
+    {
+      "identity" : "ziparchive",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ZipArchive/ZipArchive.git",
+      "state" : {
+        "revision" : "df35718ea19a94e015b91dc4881dee028ce4cdba",
+        "version" : "2.6.0"
       }
     }
   ],

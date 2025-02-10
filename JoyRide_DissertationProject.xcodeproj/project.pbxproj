@@ -36,7 +36,31 @@
 		FAFEC04A2D21A1B30062F90F /* JoyRide_DissertationProjectUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoyRide_DissertationProjectUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FA8325C32D5A20F8001EC3CF /* Exceptions for "CurvatureData" folder in "JoyRide_DissertationProject" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"great-britain.c_300/images/legend.png",
+				"great-britain.c_1000/images/legend.png",
+			);
+			target = FAFEC02F2D21A1B10062F90F /* JoyRide_DissertationProject */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		FA8325942D5A167C001EC3CF /* CurvatureData */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FA8325C32D5A20F8001EC3CF /* Exceptions for "CurvatureData" folder in "JoyRide_DissertationProject" target */,
+			);
+			path = CurvatureData;
+			sourceTree = "<group>";
+		};
+		FA8325CA2D5A4CB9001EC3CF /* MapStyles */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MapStyles;
+			sourceTree = "<group>";
+		};
 		FAFEC0322D21A1B10062F90F /* JoyRide_DissertationProject */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = JoyRide_DissertationProject;
@@ -100,6 +124,8 @@
 		FAFEC0272D21A1B10062F90F = {
 			isa = PBXGroup;
 			children = (
+				FA8325CA2D5A4CB9001EC3CF /* MapStyles */,
+				FA8325942D5A167C001EC3CF /* CurvatureData */,
 				FAFEC0322D21A1B10062F90F /* JoyRide_DissertationProject */,
 				FAFEC0432D21A1B30062F90F /* JoyRide_DissertationProjectTests */,
 				FAFEC04D2D21A1B30062F90F /* JoyRide_DissertationProjectUITests */,
@@ -131,17 +157,18 @@
 				FAFEC02D2D21A1B10062F90F /* Frameworks */,
 				FAFEC02E2D21A1B10062F90F /* Resources */,
 				7CD76CFEA573310C86E4B2D0 /* [CP] Copy Pods Resources */,
+				348EB42933676E67B0A92BBA /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				FA8325942D5A167C001EC3CF /* CurvatureData */,
+				FA8325CA2D5A4CB9001EC3CF /* MapStyles */,
 				FAFEC0322D21A1B10062F90F /* JoyRide_DissertationProject */,
 			);
 			name = JoyRide_DissertationProject;
-			packageProductDependencies = (
-			);
 			productName = JoyRide_DissertationProject;
 			productReference = FAFEC0302D21A1B10062F90F /* JoyRide_DissertationProject.app */;
 			productType = "com.apple.product-type.application";
@@ -222,6 +249,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				FAD5941B2D496620004BEF87 /* XCRemoteSwiftPackageReference "mapbox-navigation-ios" */,
+				FA8325992D5A1914001EC3CF /* XCRemoteSwiftPackageReference "ZipArchive" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FAFEC0312D21A1B10062F90F /* Products */;
@@ -260,6 +288,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		348EB42933676E67B0A92BBA /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-JoyRide_DissertationProject/Pods-JoyRide_DissertationProject-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-JoyRide_DissertationProject/Pods-JoyRide_DissertationProject-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-JoyRide_DissertationProject/Pods-JoyRide_DissertationProject-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		7CD76CFEA573310C86E4B2D0 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -644,6 +689,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		FA8325992D5A1914001EC3CF /* XCRemoteSwiftPackageReference "ZipArchive" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ZipArchive/ZipArchive.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
 		FAD5941B2D496620004BEF87 /* XCRemoteSwiftPackageReference "mapbox-navigation-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mapbox/mapbox-navigation-ios.git";
