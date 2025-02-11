@@ -11,6 +11,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+
 #if __has_feature(modules)
 @import GoogleMaps;
 #else
@@ -56,6 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @property(nonatomic, assign) BOOL showsIncidentCards;
 
+
 /** Whether destination markers for routes will be shown. This defaults to YES. */
 @property(nonatomic, assign) BOOL showsDestinationMarkers;
 
@@ -93,8 +95,8 @@ NS_ASSUME_NONNULL_BEGIN
  * The secondary background color to use for the navigation header. Appears as the background color
  * in next-turn and lane guidance dropdowns. The default value is nil. When the value of this
  * property is nil, dark green will be used as the secondary background color.
- * The provided UIColor must be in a color space that supports [UIColor getRed:green:blue:alpha] or
- * it will be ignored.
+ * The provided UIColor must be in a color space that supports `[UIColor getRed:green:blue:alpha]`
+ * or it will be ignored.
  */
 @property(nonatomic, copy, nullable) UIColor *navigationHeaderSecondaryBackgroundColor;
 
@@ -104,14 +106,14 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * The primary background color of the navigation header, in night mode, when the navigation header
  * is showing the current step. The default value is nil. When the value of this property is nil,
- * @c navigationHeaderPrimaryBackgroundColor will be used.
+ * `navigationHeaderPrimaryBackgroundColor` will be used.
  */
 @property(nonatomic, copy, nullable) UIColor *navigationHeaderPrimaryBackgroundColorNightMode;
 
 /**
  * The secondary background color of the navigation header, in night mode, when the navigation
  * header is showing the current step. The default value is nil. When the value of this property is
- * nil, @c navigationHeaderSecondaryBackgroundColor will be used.
+ * nil, `navigationHeaderSecondaryBackgroundColor` will be used.
  */
 @property(nonatomic, copy, nullable) UIColor *navigationHeaderSecondaryBackgroundColorNightMode;
 
@@ -195,8 +197,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Sets the speedometer UI configuration based on speed alert severity.
  *
- * By setting a GMSNavigationSpeedometerUIOptions, you clear the previous one if set. When no
- * GMSNavigationSpeedometerUIOptions is configured, speed alert UI fallbacks to NavSDK default
+ * By setting a `GMSNavigationSpeedometerUIOptions`, you clear the previous one if set. When no
+ * `GMSNavigationSpeedometerUIOptions` is configured, speed alert UI fallbacks to NavSDK default
  * configurations:
  * - Minor speed alert in day mode: red text with white background.
  * - Minor speed alert in night mode: red text with dark background.

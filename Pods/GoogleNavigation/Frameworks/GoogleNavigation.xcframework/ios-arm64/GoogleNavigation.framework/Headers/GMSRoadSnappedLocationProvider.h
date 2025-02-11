@@ -15,7 +15,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** Listener for events on GMSRoadSnappedLocationProvider. */
+/** Listener for events on `GMSRoadSnappedLocationProvider`. */
 @protocol GMSRoadSnappedLocationProviderListener <NSObject>
 
 /**
@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
  * road-snapped when in driving mode, not when walking or cycling.
  *
  * If any of the location properties are unavailable, they are set to the following values:
- *   coordinate: kCLLocationCoordinate2DInvalid
+ *   coordinate: `kCLLocationCoordinate2DInvalid`
  *   altitude: NAN
  *   horizontalAccuracy: -1
  *   verticalAccuracy: -1
@@ -53,14 +53,14 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Adds a listener. The listener is held with a weak reference.
  *
- * @param listener An object conforming to the @c GMSRoadSnappedLocationProviderListener protocol.
+ * @param listener An object conforming to the `GMSRoadSnappedLocationProviderListener` protocol.
  */
 - (void)addListener:(id<GMSRoadSnappedLocationProviderListener>)listener;
 
 /**
  * Removes a listener.
  *
- * @param listener An object conforming to the @c GMSRoadSnappedLocationProviderListener protocol.
+ * @param listener An object conforming to the `GMSRoadSnappedLocationProviderListener` protocol.
  *
  * @return Returns YES if the listener was removed. Returns NO if the object was not a listener.
  */
@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Starts updating the device's road-snapped location. After this is called, the delegate will start
  * receiving location update events.
  *
- * In order to avoid battery drain or unintended logging of device location, |stopUpdatingLocation|
+ * In order to avoid battery drain or unintended logging of device location, `-stopUpdatingLocation`
  * should be called when road-snapped location is no longer required.
  */
 - (void)startUpdatingLocation;

@@ -11,9 +11,9 @@
 #import <UIKit/UIKit.h>
 
 #if __has_feature(modules)
-@import GoogleMapsBase;
+@import GoogleMaps;
 #else
-#import <GoogleMapsBase/GoogleMapsBase.h>
+#import <GoogleMaps/GoogleMaps.h>
 #endif
 
 NS_ASSUME_NONNULL_BEGIN
@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, nullable, readonly) UIColor *acceptButtonTextColor;
 
 /**
- * Constructs a @c GMSNavigationTermsDialogUIParams object.
+ * Constructs a `GMSNavigationTermsDialogUIParams` object.
  *
  * See property comments for the meaning of the parameters.
  */

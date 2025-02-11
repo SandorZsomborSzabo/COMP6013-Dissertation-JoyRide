@@ -15,9 +15,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * A class representing a collection of all features of the same @c GMSFeatureType, whose style can
- * be overridden on the client. Each @c GMSFeatureType will have one corresponding @c
- * GMSFeatureLayer.
+ * A class representing a collection of all features of the same `GMSFeatureType`, whose style can
+ * be overridden on the client. Each `GMSFeatureType` will have one corresponding `GMSFeatureLayer`.
  */
 NS_SWIFT_NAME(FeatureLayer)
 @interface GMSFeatureLayer<__covariant T : id <GMSFeature>> : NSObject
@@ -29,9 +28,9 @@ NS_SWIFT_NAME(FeatureLayer)
 @property(nonatomic, readonly) GMSFeatureType featureType;
 
 /**
- * Determines if the data-driven @c GMSFeatureLayer is available. Data-driven styling requires
+ * Determines if the data-driven `GMSFeatureLayer` is available. Data-driven styling requires
  * the Metal Framework, a valid map ID and that the feature type be applied.
- * If @c NO, styling for the @c GMSFeatureLayer returns to the default and events are not triggered.
+ * If `NO`, styling for the `GMSFeatureLayer` returns to the default and events are not triggered.
  */
 @property(nonatomic, readonly, getter=isAvailable) BOOL available;
 
@@ -42,8 +41,8 @@ NS_SWIFT_NAME(FeatureLayer)
  * is run multiple times for the subsequent features entering the viewport.
  *
  * The function is required to be deterministic and return consistent results when it is applied
- * over the map tiles. If any styling specs of any feature would be changed, @c style must be set
- * again. Changing behavior of the style block without calling the @c style setter will result in
+ * over the map tiles. If any styling specs of any feature would be changed, `style` must be set
+ * again. Changing behavior of the style block without calling the `style` setter will result in
  * undefined behavior, including stale and/or shattered map renderings. See the example below:
  * @code{.swift}
  * var selectedPlaceIDs = Set<String>()
@@ -68,7 +67,7 @@ NS_SWIFT_NAME(FeatureLayer)
 /**
  * Create a feature layer instance for testing.
  *
- * This method should be used for your unit tests only. In production, @c GMSFeatureLayer instances
+ * This method should be used for your unit tests only. In production, `GMSFeatureLayer` instances
  * should only be created by the SDK.
  */
 - (instancetype)initWithFeatureType:(GMSFeatureType)featureType;

@@ -23,11 +23,11 @@ typedef void (^GMSNavigationTransactionRecorderErrorHandler)(NSError *error);
 @interface GMSNavigationTransactionRecorder : NSObject
 
 /**
- * Returns a shared singleton GMSNavigationTransactionRecorder instance. This singleton is held
+ * Returns a shared singleton `GMSNavigationTransactionRecorder` instance. This singleton is held
  * weakly and may be deallocated if an application does not keep a strong reference. You must call
  * this function only on the main thread.
  *
- * This method will throw an exception if GMSServices +provideAPIKey: has not been called.
+ * This method will throw an exception if `GMSServices` `+provideAPIKey:` has not been called.
  */
 + (GMSNavigationTransactionRecorder *)sharedInstance;
 
@@ -39,7 +39,7 @@ typedef void (^GMSNavigationTransactionRecorderErrorHandler)(NSError *error);
  * <p>This method should be called if and only if your company is billed by Google on a
  * per-transaction basis.
  *
- * @param waypoint The GMSNavigationWaypoint at which the pickup is occurring, or nil if there was
+ * @param waypoint The `GMSNavigationWaypoint` at which the pickup is occurring, or nil if there was
  *     no guidance session leading to this pickup.
  * @param transactionIDs One or more transaction IDs to which this pickup applies. The transaction
  *     ID must be unique for each billable transaction. Transaction IDs must contain at least one
@@ -59,8 +59,8 @@ typedef void (^GMSNavigationTransactionRecorderErrorHandler)(NSError *error);
  * <p>This method should be called if and only if your company is billed by Google on a
  * per-transaction basis.
  *
- * @param waypoint The GMSNavigationWaypoint at which the dropoff is occurring, or nil if there was
- *     no guidance session leading to this dropoff.
+ * @param waypoint The `GMSNavigationWaypoint` at which the dropoff is occurring, or nil if there
+ * was no guidance session leading to this dropoff.
  * @param transactionIDs One or more transaction IDs to which this dropoff applies. The transaction
  *     ID must be unique for each billable transaction. Transaction IDs must contain at least one
  *     and at most 64 characters.

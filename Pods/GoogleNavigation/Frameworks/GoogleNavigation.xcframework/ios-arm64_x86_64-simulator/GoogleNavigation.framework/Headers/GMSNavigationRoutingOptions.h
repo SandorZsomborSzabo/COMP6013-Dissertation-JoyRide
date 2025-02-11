@@ -24,9 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) GMSNavigationAlternateRoutesStrategy alternateRoutesStrategy;
 
 /**
- * An array of target distances. An target distance is used to rank routes to a destination by the
+ * An array of target distances. A target distance is used to rank routes to a destination by the
  * absolute delta to it from smallest to largest. The elements should be non-negative integers.
- * Don't set GMSNavigationAlternateRoutesStrategy and this field at the same time.
+ * Don't set `GMSNavigationAlternateRoutesStrategy` and this field at the same time.
  * Target distance is only supported for the first destination for now. So only put one
  * positive integer in the array. If the first element is not a positive integer, the
  * routing strategy defaults to the best routing strategy.
@@ -51,7 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Initializes the routing options with target distances, and sets the routing strategy to
- * GMSNavigationRoutingStrategyDeltaToTargetDistance. Ensure that target distances are always
+ * `GMSNavigationRoutingStrategyDeltaToTargetDistance`. Ensure that target distances are always
  * up-to-date when used.
  *
  * @param targetDistancesMeters Target distances for destinations. Each target distance is
@@ -74,7 +74,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Target distances used to ranking the routes. The elements should be non-negative
  * integers.
- * Don't set GMSNavigationAlternateRoutesStrategy and this field at the same time.
+ * Don't set `GMSNavigationAlternateRoutesStrategy` and this field at the same time.
  * Target distance is only supported for the first destination for now. So only put one
  * positive integer in the array. If the first element is not a positive integer, the
  * routing strategy defaults to the best routing strategy.

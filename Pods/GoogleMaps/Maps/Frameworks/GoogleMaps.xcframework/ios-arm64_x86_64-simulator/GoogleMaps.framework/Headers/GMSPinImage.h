@@ -19,10 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 
 /**
- * Returns an image style with the given pin image options that can be used as a standalone UIImage,
- * or as the icon of an Advanced Marker only.
+ * Returns an image style with the given pin image options that can be used as a standalone
+ * `UIImage`, or as the icon of an Advanced Marker only.
  *
- * @param options A @c GMSPinImageOptions object to use to customize the marker image.
+ * @param options A `GMSPinImageOptions` object to use to customize the marker image.
  * @return An image configured with the provided options.
  */
 + (GMSPinImage *)pinImageWithOptions:(GMSPinImageOptions *)options;

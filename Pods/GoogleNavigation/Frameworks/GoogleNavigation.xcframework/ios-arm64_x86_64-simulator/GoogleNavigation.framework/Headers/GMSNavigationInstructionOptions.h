@@ -75,7 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * The secondary road shield height to assign when formatting the instructions.
  *
- * See @c primaryRoadShieldHeight for a description of road shields.
+ * See `primaryRoadShieldHeight` for a description of road shields.
  */
 @property(nonatomic) CGFloat secondaryRoadShieldHeight;
 
@@ -84,7 +84,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * By default, the width is 0, which will cause no outline to be drawn.
  *
- * See @c primaryRoadShieldHeight for a description of road shields.
+ * See `primaryRoadShieldHeight` for a description of road shields.
  */
 @property(nonatomic) CGFloat roadShieldOutlineWidth;
 
@@ -93,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * By default, the color is nil, which will cause no outline to be drawn.
  *
- * See @c primaryRoadShieldHeight for a description of road shields.
+ * See `primaryRoadShieldHeight` for a description of road shields.
  */
 @property(nonatomic, nullable) UIColor *roadShieldOutlineColor;
 

@@ -46,13 +46,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) GMSNavigationTravelMode travelMode;
 
 /**
- * An instance of GMSLocationSimulator which can be used to simulate locations for this session,
+ * An instance of `GMSLocationSimulator` which can be used to simulate locations for this session,
  * or nil if terms and conditions have not been accepted.
  */
 @property(nonatomic, nullable, readonly) GMSLocationSimulator *locationSimulator;
 
 /**
- * The instance of GMSNavigator managing this navigation session, or nil if terms and conditions
+ * The instance of `GMSNavigator` managing this navigation session, or nil if terms and conditions
  * have not been accepted.
  */
 @property(nonatomic, nullable, readonly) GMSNavigator *navigator;
@@ -64,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, nullable, readonly)
     GMSRoadSnappedLocationProvider *roadSnappedLocationProvider;
 
-/** Instances of this class should be obtained by calling the method on GMSNavigationServices. */
+/** Instances of this class should be obtained by calling the method on `GMSNavigationServices`. */
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

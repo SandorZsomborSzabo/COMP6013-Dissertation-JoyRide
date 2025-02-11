@@ -13,7 +13,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * A class contains information for license plate restriction. It mantains the state of vehicle's
+ * A class contains information for license plate restriction. It maintains the state of vehicle's
  * license plate information and restriction.
  */
 @interface GMSNavigationLicensePlateRestriction : NSObject
@@ -24,12 +24,11 @@ NS_ASSUME_NONNULL_BEGIN
  * code. This allows us to route around certain types of road restrictions which are based on
  * license plate number.
  *
- * Returns nil if license plate's last digit or country code is invalid.
- *
  * @param lastDigit the last digit of the current vehicle's license plate. This value must be
  *        between 0 and 9.
  * @param countryCode the country code of the current vehicle's license plate. Currently Indonesia
  *        (ID) and Brazil (BZ) are supported.
+ * @return `nil` if license plate's last digit or country code is invalid.
  */
 - (nullable instancetype)initWithLicensePlateLastDigit:(NSInteger)lastDigit
                                            countryCode:(NSString *)countryCode;

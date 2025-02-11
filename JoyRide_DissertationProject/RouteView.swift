@@ -3,6 +3,7 @@
 //  JoyRide_DissertationProject
 //
 //  Created by macbook on 27/01/2025.
+//  Updated for round-trip route visibility and custom map styling on 11/02/2025.
 //
 
 import SwiftUI
@@ -16,8 +17,8 @@ import GoogleNavigation
 // MARK: - CurvatureOption (Picker)
 /// Added a "noCurve" option
 enum CurvatureOption: String, CaseIterable {
-    case noCurve = "No Curve"
-    case lessCurved = "Less Curved"   // c_300 (≥300)
+    case noCurve = "Less Curved"
+    case lessCurved = "Curved"   // c_300 (≥300)
     case moreCurved = "More Curved"   // c_1000 (≥1000)
 }
 
@@ -203,7 +204,7 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
         locationManager.startUpdatingLocation()
     }
     
-    // Start navigation (Google Navigation SDK)
+    // Start navigation (Google Navigation SDK) for a single destination – kept for backward compatibility.
     func startNavigation(to destination: CLLocationCoordinate2D, on mapView: GMSMapView) {
         guard let waypoint = GMSNavigationWaypoint(location: destination, title: "Destination") else {
             print("Failed to create navigation waypoint.")
@@ -216,6 +217,28 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
                 return
             }
             
+            mapView.navigator?.isGuidanceActive = true
+            mapView.cameraMode = .following
+            
+            DispatchQueue.main.async {
+                self.isNavigating = true
+            }
+        }
+    }
+    
+    // Start round-trip navigation with multiple waypoints.
+    func startRoundTripNavigation(with waypoints: [CLLocationCoordinate2D], on mapView: GMSMapView) {
+        let navWaypoints = waypoints.compactMap { GMSNavigationWaypoint(location: $0, title: "") }
+        guard !navWaypoints.isEmpty else {
+            print("Failed to create navigation waypoints.")
+            return
+        }
+        
+        mapView.navigator?.setDestinations(navWaypoints) { routeStatus in
+            guard routeStatus == .OK else {
+                print("Route error: \(routeStatus)")
+                return
+            }
             mapView.navigator?.isGuidanceActive = true
             mapView.cameraMode = .following
             
@@ -249,25 +272,56 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
     }
 }
 
+extension GMSMapView {
+    func loadMapStyle(named fileName: String) {
+        do {
+            if let styleURL = Bundle.main.url(forResource: fileName, withExtension: "json") {
+                self.mapStyle = try GMSMapStyle(contentsOfFileURL: styleURL)
+                //print("\(fileName).json successfully loaded.")
+            } else {
+                print("Unable to find \(fileName).json in the main bundle")
+            }
+        } catch {
+            print("Failed to load map style: \(error)")
+        }
+    }
+}
+
 // MARK: - GoogleMapView (SwiftUI Wrapper)
+// This updated wrapper re-applies the custom style in updateUIView and via a delegate callback.
 struct GoogleMapView: UIViewRepresentable {
     @Binding var mapView: GMSMapView
     @Binding var userLocation: CLLocationCoordinate2D?
     
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
     func makeUIView(context: Context) -> GMSMapView {
         mapView.settings.myLocationButton = true
         mapView.isMyLocationEnabled = true
+        // Set the delegate to our coordinator
+        mapView.delegate = context.coordinator
+        // Apply the custom style initially.
+        mapView.loadMapStyle(named: "dark_yellow_map_style")
         return mapView
     }
     
     func updateUIView(_ mapView: GMSMapView, context: Context) {
-        if let userLocation = userLocation {
-            let camera = GMSCameraPosition.camera(
-                withLatitude: userLocation.latitude,
-                longitude: userLocation.longitude,
-                zoom: 14
-            )
-            mapView.animate(to: camera)
+        // Reapply the style on every update.
+        mapView.loadMapStyle(named: "dark_yellow_map_style")
+    }
+    
+    class Coordinator: NSObject, GMSMapViewDelegate {
+        var parent: GoogleMapView
+        
+        init(_ parent: GoogleMapView) {
+            self.parent = parent
+        }
+        
+        func mapViewDidFinishTileRendering(_ mapView: GMSMapView) {
+            // Once tile rendering finishes, try reapplying the style.
+            mapView.loadMapStyle(named: "dark_yellow_map_style")
         }
     }
 }
@@ -277,30 +331,36 @@ struct RouteView: View {
     @StateObject private var navManager = GoogleNavigationManager()
     @State private var mapView = GMSMapView()
     
-    // Time selection
+    // Time selection (30, 60, or 90 minutes)
     @State private var selectedTime: Int = 30
     
-    // Curvature selection
-    // NOTE: Now includes "noCurve"
+    // Curvature selection (includes "noCurve")
     @State private var selectedCurvatureThreshold: CurvatureOption = .noCurve
     
-    // Destination
+    // Destination (for the outbound leg) and startLocation (to remember where we began)
     @State private var destination: CLLocationCoordinate2D?
+    @State private var startLocation: CLLocationCoordinate2D?
     
-    // Array of road segments from KML (only used for lessCurved / moreCurved)
+    // Array of road segments from KML (used for lessCurved / moreCurved)
     @State private var roadSegments: [RoadSegment] = []
+    
+    // Polylines for outbound, return, and the combined round-trip route
+    @State private var outboundPolyline: GMSPolyline?
+    @State private var returnPolyline: GMSPolyline?
+    @State private var combinedPolyline: GMSPolyline?
     
     var body: some View {
         VStack {
-            // Time Picker
+            // Time Picker (30, 60, or 90 minutes)
             Picker("Trip Duration", selection: $selectedTime) {
                 Text("30 Min").tag(30)
                 Text("60 Min").tag(60)
+                Text("90 Min").tag(90)
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding()
             
-            // Curvature Picker (now has 3 options: No Curve, Less Curved, More Curved)
+            // Curvature Picker (No Curve, Less Curved, More Curved)
             Picker("Curvature", selection: $selectedCurvatureThreshold) {
                 ForEach(CurvatureOption.allCases, id: \.self) { option in
                     Text(option.rawValue).tag(option)
@@ -309,10 +369,7 @@ struct RouteView: View {
             .pickerStyle(SegmentedPickerStyle())
             .padding()
             .onChange(of: selectedCurvatureThreshold) { _ in
-                // If user picks "No Curve," we won't load KML
-                // Otherwise, we load the relevant KML
                 if selectedCurvatureThreshold == .noCurve {
-                    // Clear out any existing segments so we don't do a leftover route
                     roadSegments = []
                 } else {
                     loadLocalKML()
@@ -329,8 +386,9 @@ struct RouteView: View {
                 Button(navManager.isNavigating ? "Stop Navigation" : "Start Navigation") {
                     if navManager.isNavigating {
                         navManager.stopNavigation(on: mapView)
-                    } else if let destination = destination {
-                        navManager.startNavigation(to: destination, on: mapView)
+                    } else if let dest = destination, let start = startLocation {
+                        // Start round-trip navigation using two waypoints:
+                        navManager.startRoundTripNavigation(with: [dest, start], on: mapView)
                     }
                 }
                 .padding()
@@ -339,24 +397,23 @@ struct RouteView: View {
                 .cornerRadius(8)
             }
             
-            // Google Map
+            // Google Map view
             GoogleMapView(mapView: $mapView, userLocation: $navManager.userLocation)
                 .edgesIgnoringSafeArea(.bottom)
                 .onAppear {
                     let companyName = "Your Company Name"
+                    // Show Terms & Conditions. The accepted value sets isNavigationEnabled.
                     GMSNavigationServices.showTermsAndConditionsDialogIfNeeded(withCompanyName: companyName) { accepted in
                         mapView.isNavigationEnabled = accepted
                     }
                     navManager.requestPermission()
                     
-                    // Initially, if we start with .noCurve, do not load KML
-                    // If you prefer a default "lessCurved," set that above
                     if selectedCurvatureThreshold != .noCurve {
                         loadLocalKML()
                     }
                 }
         }
-        // Overlay for navigation state
+        // Overlay to indicate navigation state
         .overlay(
             VStack {
                 if navManager.isNavigating {
@@ -374,29 +431,177 @@ struct RouteView: View {
         )
     }
     
-    // MARK: - Generate a Random Destination
+    // MARK: - Generate a Round Trip Route (and display it on the map)
     private func generateRoute() {
         guard let userLoc = navManager.userLocation else {
             print("User location not available.")
             return
         }
         
-        // Approx distance for 30/60 min
-        let milesAway = (selectedTime == 30) ? 5.0 : 10.0
+        // Save the starting location.
+        startLocation = userLoc
+        
+        // For a round-trip, take half the total trip distance for the outbound leg.
+        let totalMiles = Double(selectedTime) / 30.0 * 5.0
+        let outboundMiles = totalMiles / 2.0
+        
+        var dest: CLLocationCoordinate2D?
         
         switch selectedCurvatureThreshold {
         case .noCurve:
-            // If user wants "No Curve," pick a purely random coordinate
-            destination = randomCoordinate(from: userLoc, withinMiles: milesAway)
-            
+            dest = randomCoordinate(from: userLoc, withinMiles: outboundMiles)
         case .lessCurved, .moreCurved:
-            // We use the road segments approach
-            destination = randomCoordinateOnCurvyRoads(
+            dest = randomCoordinateOnCurvyRoads(
                 origin: userLoc,
-                maxDistanceMiles: milesAway,
+                maxDistanceMiles: outboundMiles,
                 roadSegments: roadSegments
             )
         }
+        
+        guard let destination = dest else {
+            print("Failed to generate destination.")
+            return
+        }
+        self.destination = destination
+        
+        // Clear any existing polylines.
+        outboundPolyline?.map = nil
+        returnPolyline?.map = nil
+        combinedPolyline?.map = nil
+        
+        // Fetch both outbound and return routes.
+        fetchRoundTripRoutes(from: userLoc, to: destination) { outboundPath, returnPath in
+            if let outPath = outboundPath, let retPath = returnPath {
+                // Combine the two paths into one round-trip route.
+                let combinedPath = GMSMutablePath()
+                for i in 0..<outPath.count() {
+                    combinedPath.add(outPath.coordinate(at: i))
+                }
+                for i in 0..<retPath.count() {
+                    combinedPath.add(retPath.coordinate(at: i))
+                }
+                DispatchQueue.main.async {
+                    // Draw the combined route in purple.
+                    let polyline = GMSPolyline(path: combinedPath)
+                    polyline.strokeColor = .purple
+                    polyline.strokeWidth = 5.0
+                    polyline.map = mapView
+                    self.combinedPolyline = polyline
+                    
+                    // Adjust camera to show the entire route.
+                    var bounds = GMSCoordinateBounds()
+                    for i in 0..<combinedPath.count() {
+                        bounds = bounds.includingCoordinate(combinedPath.coordinate(at: i))
+                    }
+                    let update = GMSCameraUpdate.fit(bounds, withPadding: 60.0)
+                    mapView.animate(with: update)
+                }
+            } else {
+                print("Failed to fetch round trip routes.")
+            }
+        }
+    }
+    
+    /// Fetches both an outbound route (origin -> destination) and a return route (destination -> origin)
+    /// using the Directions API (with alternatives), then chooses a pair that minimizes overlap.
+    private func fetchRoundTripRoutes(from origin: CLLocationCoordinate2D,
+                                      to destination: CLLocationCoordinate2D,
+                                      completion: @escaping (GMSPath?, GMSPath?) -> Void) {
+        fetchRoutes(from: origin, to: destination) { outboundPaths in
+            self.fetchRoutes(from: destination, to: origin) { returnPaths in
+                if let pair = self.chooseDisjointPair(outboundPaths: outboundPaths, returnPaths: returnPaths) {
+                    completion(pair.outbound, pair.return)
+                } else {
+                    // Fallback: use the first available routes.
+                    completion(outboundPaths.first, returnPaths.first)
+                }
+            }
+        }
+    }
+    
+    /// Helper: Fetches an array of routes (as GMSPath) from the Directions API.
+    private func fetchRoutes(from origin: CLLocationCoordinate2D,
+                             to destination: CLLocationCoordinate2D,
+                             completion: @escaping ([GMSPath]) -> Void) {
+        let apiKey = "YOUR_GOOGLE_MAPS_API_KEY"
+        var urlComponents = URLComponents(string: "https://maps.googleapis.com/maps/api/directions/json")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "origin", value: "\(origin.latitude),\(origin.longitude)"),
+            URLQueryItem(name: "destination", value: "\(destination.latitude),\(destination.longitude)"),
+            URLQueryItem(name: "alternatives", value: "true"),
+            URLQueryItem(name: "key", value: apiKey)
+        ]
+        
+        guard let url = urlComponents.url else {
+            print("Failed to create URL for directions request.")
+            completion([])
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("Error fetching directions: \(error)")
+                completion([])
+                return
+            }
+            guard let data = data else {
+                print("No data returned from directions request.")
+                completion([])
+                return
+            }
+            do {
+                let decoder = JSONDecoder()
+                let directionsResponse = try decoder.decode(GoogleDirectionsResponse.self, from: data)
+                var paths: [GMSPath] = []
+                if let routes = directionsResponse.routes {
+                    for route in routes {
+                        let polylineString = route.overviewPolyline.points
+                        if let path = GMSPath(fromEncodedPath: polylineString) {
+                            paths.append(path)
+                        }
+                    }
+                }
+                completion(paths)
+            } catch {
+                print("Error decoding directions response: \(error)")
+                completion([])
+            }
+        }.resume()
+    }
+    
+    /// Chooses a pair of outbound and return paths that minimizes overlap.
+    private func chooseDisjointPair(outboundPaths: [GMSPath],
+                                    returnPaths: [GMSPath]) -> (outbound: GMSPath, `return`: GMSPath)? {
+        var bestPair: (GMSPath, GMSPath)?
+        var bestScore: Double = Double.greatestFiniteMagnitude
+        
+        for outPath in outboundPaths {
+            for retPath in returnPaths {
+                let score = overlapScore(path1: outPath, path2: retPath)
+                if score < bestScore {
+                    bestScore = score
+                    bestPair = (outPath, retPath)
+                }
+            }
+        }
+        return bestPair
+    }
+    
+    /// A simple heuristic that counts points in path1 within 50 meters of any point in path2.
+    private func overlapScore(path1: GMSPath, path2: GMSPath) -> Double {
+        var score: Double = 0
+        for i in 0..<path1.count() {
+            let coord1 = path1.coordinate(at: i)
+            for j in 0..<path2.count() {
+                let coord2 = path2.coordinate(at: j)
+                let d = distanceBetween(coord1.latitude, coord1.longitude, coord2.latitude, coord2.longitude)
+                if d < 50 { // 50-meter threshold
+                    score += 1
+                    break
+                }
+            }
+        }
+        return score
     }
     
     /// Original random bearing approach for "No Curve"
@@ -421,7 +626,7 @@ struct RouteView: View {
         )
     }
     
-    /// Curvy approach: pick from loaded "roadSegments"
+    /// Curvy approach: pick a random coordinate from loaded road segments.
     private func randomCoordinateOnCurvyRoads(
         origin: CLLocationCoordinate2D,
         maxDistanceMiles: Double,
@@ -451,7 +656,7 @@ struct RouteView: View {
         return randomCoord
     }
     
-    // MARK: - Load Local KML (for lessCurved / moreCurved only)
+    // MARK: - Load Local KML (for lessCurved / moreCurved)
     private func loadLocalKML() {
         let subfolder: String
         let kmlFileName: String
@@ -460,13 +665,10 @@ struct RouteView: View {
         case .lessCurved:
             subfolder   = "CurvatureData/great-britain.c_300/great-britain"
             kmlFileName = "doc_c300"
-            
         case .moreCurved:
             subfolder   = "CurvatureData/great-britain.c_1000/great-britain"
             kmlFileName = "doc_c1000"
-            
         case .noCurve:
-            // Should never hit here because we skip if noCurve
             return
         }
         
@@ -479,7 +681,6 @@ struct RouteView: View {
             return
         }
         
-        // Parse the KML
         let parser = KMLParser()
         if let lines = parser.parseKML(from: kmlURL) {
             let segments = lines.compactMap { RoadSegment.fromKMLLineString($0) }

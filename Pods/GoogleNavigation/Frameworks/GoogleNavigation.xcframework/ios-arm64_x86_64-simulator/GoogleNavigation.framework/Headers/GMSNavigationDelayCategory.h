@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 
 /**
- * A GMSNavigationDelayCategory is a category that represents the delay category of a route or a
+ * A `GMSNavigationDelayCategory` is a category that represents the delay category of a route or a
  * a path.
  */
 typedef NS_ENUM(NSInteger, GMSNavigationDelayCategory) {

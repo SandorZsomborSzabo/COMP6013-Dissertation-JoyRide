@@ -10,7 +10,11 @@
 
 #import <UIKit/UIKit.h>
 
-@class GMSMapView;
+#if __has_feature(modules)
+@import GoogleMaps;
+#else
+#import <GoogleMaps/GoogleMaps.h>
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -20,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @protocol GMSNavigationAccessoryView <NSObject>
 
-/** @return Desired height of the accessory view constrained to the given @c size. */
+/** @return Desired height of the accessory view constrained to the given `size.` */
 - (CGFloat)heightForAccessoryViewConstrainedToSize:(CGSize)size onMapView:(GMSMapView *)mapView;
 
 @end

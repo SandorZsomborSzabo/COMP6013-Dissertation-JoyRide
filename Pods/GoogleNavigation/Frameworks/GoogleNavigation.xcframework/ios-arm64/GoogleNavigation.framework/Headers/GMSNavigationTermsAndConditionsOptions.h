@@ -32,19 +32,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy) NSString *companyName;
 
 /**
- * Title of the dialog box. If @c title is nil, the dialog uses the default title.
+ * Title of the dialog box. If `title` is nil, the dialog uses the default title.
  * Note: For custom titles, the caller of this method needs to localize this parameter
  * The default title is localized by the services automatically.
  */
 @property(nonatomic, copy, nullable) NSString *title;
 
 /**
- * Indicates if @c -showTermsAndConditionsDialogIfNeededWithOptions:callback: should
- * display the driver awareness disclaimer only. The default is @c NO and the disclaimer is
+ * Indicates if `-showTermsAndConditionsDialogIfNeededWithOptions:callback:` should
+ * display the driver awareness disclaimer only. The default is `NO` and the disclaimer is
  * shown in addition to the default terms and services provided with the Navigation SDK.
- * Set to @c YES to indicate that only the driver awareness disclaimer should be shown.
+ * Set to `YES` to indicate that only the driver awareness disclaimer should be shown.
  *
- * If the project must show the Terms and Conditions dialog, setting this variable to @c YES has no
+ * If the project must show the Terms and Conditions dialog, setting this variable to `YES` has no
  * effect.
  */
 @property(nonatomic, assign) BOOL shouldOnlyShowDriverAwarenessDialog;
@@ -58,4 +58,3 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
-

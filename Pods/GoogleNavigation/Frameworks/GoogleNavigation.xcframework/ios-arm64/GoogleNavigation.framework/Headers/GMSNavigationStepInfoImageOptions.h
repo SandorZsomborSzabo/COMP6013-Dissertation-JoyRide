@@ -12,7 +12,7 @@
 #import "GMSNavigationScreenMetrics.h"
 
 
-/** The image size which GMSNavigationStepInfo images will be generated. */
+/** The image size which `GMSNavigationStepInfo` images will be generated. */
 typedef NS_ENUM(NSInteger, GMSNavigationManeuverImageSize) {
   /**
    * 48pt x 48pt maneuver image size. Recommended use for cases such as next step maneuvers and
@@ -38,8 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, nullable) id<GMSNavigationScreenMetrics> screenMetrics;
 
 /**
- * The image size for maneuverImage in GMSNavigationStepInfo.
- * Defaults to GMSNavigationManeuverImageSizeSquare96.
+ * The image size for maneuverImage in `GMSNavigationStepInfo`.
+ * Defaults to `GMSNavigationManeuverImageSizeSquare96`.
  */
 @property(nonatomic) GMSNavigationManeuverImageSize maneuverImageSize;
 

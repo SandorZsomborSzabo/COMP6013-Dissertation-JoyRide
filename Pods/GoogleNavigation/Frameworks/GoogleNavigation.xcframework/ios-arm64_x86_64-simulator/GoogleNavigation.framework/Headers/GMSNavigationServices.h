@@ -9,10 +9,11 @@
 //
 
 #import <Foundation/Foundation.h>
+
 #if __has_feature(modules)
-@import GoogleMapsBase;
+@import GoogleMaps;
 #else
-#import <GoogleMapsBase/GoogleMapsBase.h>
+#import <GoogleMaps/GoogleMaps.h>
 #endif
 
 @class GMSNavigationTermsAndConditionsOptions;
@@ -24,9 +25,9 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Called when the user accepts or rejects the terms and conditions.
  *
- * For versions >= 5.5.0, @c termsAccepted will always be YES.
+ * For versions >= 5.5.0, `termsAccepted` will always be YES.
  *
- * @related GMSNavigationServices
+ * @related `GMSNavigationServices`
  */
 typedef void (^GMSTermsResponseCallback)(BOOL termsAccepted);
 
@@ -49,10 +50,10 @@ typedef void (^GMSTermsResponseCallback)(BOOL termsAccepted);
  * conditions. The callback is sent on the main queue with the user's response.
  *
  * If the user has already accepted the terms and conditions, no dialog appears, and the callback
- * contains @c termsAccepted = @c YES.
- *
- * @param options The @c GMSNavigationTermsAndConditionsOptions object which modifies the appearance
- *    of the terms and conditions dialog. See @ GMSNavigationTermsAndConditionsOptions for more
+ * contains `termsAccepted` = `YES.
+` *
+ * @param options The `GMSNavigationTermsAndConditionsOptions` object which modifies the appearance
+ *    of the terms and conditions dialog. See `GMSNavigationTermsAndConditionsOptions` for more
  *    information.
  * @param callback Block sent on the main queue with the user's response.
  */
@@ -61,41 +62,39 @@ typedef void (^GMSTermsResponseCallback)(BOOL termsAccepted);
                                                callback:(GMSTermsResponseCallback)callback;
 
 /**
- * Deprecated. Use @c GMSNavigationTermsAndConditionsOptions API with @c
- * showTermsAndConditionsDialogIfNeededWithOptions:callback: instead.
+ * Deprecated. Use `GMSNavigationTermsAndConditionsOptions` API with
+ * `+showTermsAndConditionsDialogIfNeededWithOptions:callback:` instead.
  *
- * Indicates if |showTermsAndConditionsDialogIfNeededWithCompanyName:callback:| should
- * display the driver awareness disclaimer only. The default is @c NO and the disclaimer is
+ * Indicates if `-showTermsAndConditionsDialogIfNeededWithCompanyName:callback:` should
+ * display the driver awareness disclaimer only. The default is `NO` and the disclaimer is
  * shown in addition to the default terms and services provided with the Navigation SDK.
- * Set to @c YES to indicate that only the driver awareness disclaimer should be shown.
+ * Set to `YES` to indicate that only the driver awareness disclaimer should be shown.
  *
- * If the project must show the Terms and Conditions dialog, setting this variable to @c YES has no
- * effect. Additionally, the getter method always returns @c NO .
+ * If the project must show the Terms and Conditions dialog, setting this variable to `YES` has no
+ * effect. Additionally, the getter method always returns `NO` .
  *
  * This property must be set or read from the main thread.
  */
-@property(class, nonatomic) BOOL shouldOnlyShowDriverAwarenesssDisclaimer
-    __GMS_AVAILABLE_BUT_DEPRECATED_MSG(
-        "Use the GMSNavigationTermsAndConditionsOptions API instead.")
-        ;
+@property(class, nonatomic)
+    BOOL shouldOnlyShowDriverAwarenesssDisclaimer __GMS_AVAILABLE_BUT_DEPRECATED_MSG(
+        "Use the GMSNavigationTermsAndConditionsOptions API instead.");
 
 /**
- * Deprecated. Use @c showTermsAndConditionsDialogIfNeededWithOptions:callback: instead.
+ * Deprecated. Use `+showTermsAndConditionsDialogIfNeededWithOptions:callback:` instead.
  *
  * Shows a modal dialog box if the app user has not yet accepted the Navigation SDK terms and
  * conditions. The callback is sent on the main queue with the user's response.
  *
  * If the user has already accepted the terms and conditions, no dialog appears, and the callback
- * contains @c termsAccepted = @c YES.
- *
- * Set @c companyName parameter to your company. The company name appears in the terms and
+ * contains `termsAccepted` = `YES`
+ * Set `companyName` parameter to your company. The company name appears in the terms and
  * conditions text. The text explains to app users that location data may be shared with this
  * company to improve operations.
  *
  * Call this method from the main thread. Multiple calls without waiting for a response have no
  * effect.
  *
- * @param title Title of the dialog box. If @c title is nil, the dialog uses the default title.
+ * @param title Title of the dialog box. If `title` is nil, the dialog uses the default title.
  *     Note: For custom titles, the caller of this method needs to localize this parameter. The
  *     default title is localized by the services automatically.
  * @param companyName Name of the company releasing the app and in the agreement with Google to
@@ -110,53 +109,49 @@ typedef void (^GMSTermsResponseCallback)(BOOL termsAccepted);
                                                           UIParams
                                              callback:(GMSTermsResponseCallback)callback
     __GMS_AVAILABLE_BUT_DEPRECATED_MSG(
-        "Use showTermsAndConditionsDialogWithOptions:callback: instead.")
-        ;
+        "Use showTermsAndConditionsDialogWithOptions:callback: instead.");
 
 /**
- * Deprecated. Use @c showTermsAndConditionsDialogIfNeededWithOptions:callback: instead.
+ * Deprecated. Use `+showTermsAndConditionsDialogIfNeededWithOptions:callback:` instead.
  *
  * Shows the terms and conditions dialog using the default look and feel.
  *
  * See +showTermsAndConditionsDialogIfNeededWithTitle:companyName:UIParams:callback: for details,
- * including a description of the parameters @title, @c companyName and @c callback.
+ * including a description of the parameters @title, `companyName` and `callback`.
  */
 + (void)showTermsAndConditionsDialogIfNeededWithTitle:(nullable NSString *)title
                                           companyName:(NSString *)companyName
                                              callback:(GMSTermsResponseCallback)callback
     __GMS_AVAILABLE_BUT_DEPRECATED_MSG(
-        "Use showTermsAndConditionsDialogWithOptions:callback: instead.")
-        ;
+        "Use showTermsAndConditionsDialogWithOptions:callback: instead.");
 
 /**
- * Deprecated. Use @c showTermsAndConditionsDialogIfNeededWithOptions:callback: instead.
+ * Deprecated. Use `+showTermsAndConditionsDialogIfNeededWithOptions:callback:` instead.
  *
  * Shows the terms and conditions dialog using the default title and look and feel.
  *
  * See +showTermsAndConditionsDialogIfNeededWithTitle:companyName:UIParams:callback: for details,
- * including a description of the parameters @c companyName and @c callback.
+ * including a description of the parameters `companyName` and `callback`.
  */
 + (void)showTermsAndConditionsDialogIfNeededWithCompanyName:(NSString *)companyName
                                                    callback:(GMSTermsResponseCallback)callback
     __GMS_AVAILABLE_BUT_DEPRECATED_MSG(
-        "Use showTermsAndConditionsDialogWithOptions:callback: instead.")
-        ;
+        "Use showTermsAndConditionsDialogWithOptions:callback: instead.");
 
 /**
  * Resets the terms and conditions to the unaccepted state. After calling this method,
- * |areTermsAndConditionsAccepted| will return NO, and
- #if SDK_BUILD_CONFIG(EnableNavSDKSkipToSOptions)
- * @c showTermsAndConditionsDialogIfNeededWithOptions:callback: and
- #endif
- * |showTermsAndConditionsDialogIfNeededWithCompanyName:callback:| will show the terms and
- * conditions dialog. The |navigationEnabled| property of any existing GMSMapView instances will be
+ * `+areTermsAndConditionsAccepted` will return NO, and
+ * `+showTermsAndConditionsDialogIfNeededWithOptions:callback:` and
+ * `+showTermsAndConditionsDialogIfNeededWithCompanyName:callback:` will show the terms and
+ * conditions dialog. The `navigationEnabled` property of any existing `GMSMapView` instances will
+ be
  * reset to NO.
  */
 + (void)resetTermsAndConditionsAccepted;
 
 /**
  * Enables reporting of abnormal SDK terminations such as the app crashes while the SDK is still
- * running. This allows Google to improve SDK stability when applicable. The default is @c YES and
+ * running. This allows Google to improve SDK stability when applicable. The default is `YES` and
  * value must be updated before the services instance is initialized.
  *
  * This property must be set from the main thread.
@@ -172,8 +167,8 @@ typedef void (^GMSTermsResponseCallback)(BOOL termsAccepted);
  * If the terms and conditions have not yet been accepted, this method will return nil.
  * That is the only reason nil will be returned from this method.
  *
- * You can associate this session with a map after creating it by using the @c GMSMapView method
- * @c -enableNavigationWithSession:. Sessions are heavyweight objects that consume memory, data,
+ * You can associate this session with a map after creating it by using the `GMSMapView` method
+ * `-enableNavigationWithSession:.` Sessions are heavyweight objects that consume memory, data,
  * and battery, so they should be allocated only if a persistent navigation session is a major
  * feature of the application. For the same reason, if your app creates a navigation UI after it
  * establishes a navigation session, make sure to start the navigation UI with the existing

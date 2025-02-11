@@ -16,13 +16,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * An immutable class that defines triggering thresholds for different severities of speed alerts,
- * represented by GMSNavigationSpeedAlertSeverity.
+ * represented by `GMSNavigationSpeedAlertSeverity`.
  *
  * You can use this to customize the speed alert triggering thresholds in percentage for both minor
  * and major alerts, and customize the time based triggering threshold for major speed alert.
  *
- * The speed alerts triggered by corresponding thresholds from this GMSNavigationSpeedAlertOptions
- * have UI customized in GMSNavigationSpeedometerUIOptions if set.
+ * The speed alerts triggered by corresponding thresholds from this `GMSNavigationSpeedAlertOptions`
+ * have UI customized in `GMSNavigationSpeedometerUIOptions` if set.
  */
 @interface GMSNavigationSpeedAlertOptions : NSObject <NSCopying, NSMutableCopying>
 
@@ -35,7 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Gets the speed alert threshold (as a percentage) for the specific
- * GMSNavigationSpeedAlertSeverity. A value of 0.0 represents 0%, and 1.0 represents 100%. A
+ * `GMSNavigationSpeedAlertSeverity`. A value of 0.0 represents 0%, and 1.0 represents 100%. A
  * negative value indicates no threshold being set for that speedingType.
  */
 - (CGFloat)thresholdPercentageForSpeedAlertSeverity:
@@ -45,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * A mutable class that defines triggering thresholds for different severities of speed alerts,
- * represented by GMSNavigationSpeedAlertSeverity.
+ * represented by `GMSNavigationSpeedAlertSeverity`.
  */
 @interface GMSNavigationMutableSpeedAlertOptions : GMSNavigationSpeedAlertOptions
 
@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic) NSTimeInterval severityUpgradeDurationSeconds;
 
 /**
- * Sets the speed alert threshold in percentage for the specific GMSNavigationSpeedAlertSeverity.
+ * Sets the speed alert threshold in percentage for the specific `GMSNavigationSpeedAlertSeverity`.
  * One severity of speed alert is triggered when the speed exceeds the corresponding threshold.
  *
  * If both minor and major speed alert threshold are set, the major speed alert threshold must be

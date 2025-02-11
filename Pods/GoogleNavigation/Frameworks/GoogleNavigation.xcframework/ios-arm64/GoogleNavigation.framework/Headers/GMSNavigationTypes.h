@@ -109,7 +109,7 @@ typedef NS_ENUM(NSInteger, GMSVoiceGuidanceAudioDeviceType) {
   GMSVoiceGuidanceAudioDeviceTypeBluetooth,
 };
 
-/** A GMSRouteStatus is a status code that represents the result of a route request. */
+/** A `GMSRouteStatus` is a status code that represents the result of a route request. */
 typedef NS_ENUM(NSInteger, GMSRouteStatus) {
   /**
    * A route could not be calculated because of an internal error. In some case, this can be
@@ -176,7 +176,7 @@ typedef NS_ENUM(NSInteger, GMSNavigationLightingMode) {
 
 /**
  * The routing strategy specifies how routes are ranked, which affects the route when it is chosen
- * and during re-routing. The default value is GMSNavigationRoutingStrategyDefaultBest.
+ * and during re-routing. The default value is `GMSNavigationRoutingStrategyDefaultBest`.
  */
 typedef NS_ENUM(NSInteger, GMSNavigationRoutingStrategy) {
   /**

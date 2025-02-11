@@ -20,12 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 /** Contains information about the state of navigation */
 @interface GMSNavigationNavInfo : NSObject
 
-/** The current @c GMSNavigationNavState for navigation. */
+/** The current `GMSNavigationNavState` for navigation. */
 @property(nonatomic, readonly) GMSNavigationNavState navState;
 
 /**
  * Information about the upcoming maneuver step. This is only set if the navState is
- * GMSNavigationNavStateEnroute and will be null otherwise.
+ * `GMSNavigationNavStateEnroute` and will be null otherwise.
  */
 @property(nonatomic, nullable, readonly) GMSNavigationStepInfo *currentStep;
 

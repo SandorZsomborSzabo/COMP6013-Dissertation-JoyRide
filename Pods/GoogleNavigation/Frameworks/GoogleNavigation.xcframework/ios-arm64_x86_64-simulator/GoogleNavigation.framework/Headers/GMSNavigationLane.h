@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 /** Information about a single lane during navigation. */
 @interface GMSNavigationLane : NSObject
 
-/** The array of @c GMSNavigationLaneDirection in this given lane. */
+/** The array of `GMSNavigationLaneDirection` in this given lane. */
 @property(nonatomic, readonly) NSArray<GMSNavigationLaneDirection *> *laneDirections;
 
 - (null_unspecified instancetype)init NS_UNAVAILABLE;

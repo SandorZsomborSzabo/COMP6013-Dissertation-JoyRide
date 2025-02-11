@@ -14,7 +14,7 @@
 /**
  * Protocol for returning information about screen metrics.
  *
- * This protocol is a subset of the screen-metric-related properties implemented by UIScreen.
+ * This protocol is a subset of the screen-metric-related properties implemented by `UIScreen`.
  */
 @protocol GMSNavigationScreenMetrics
 
@@ -33,7 +33,8 @@
 @end
 
 /**
- * UIScreen category already implements all the methods in the GMSNavigationScreenMetrics protocol.
+ * `UIScreen` category already implements all the methods in the `GMSNavigationScreenMetrics`
+ * protocol.
  */
 @interface UIScreen (GMSNavigationStepImageOptions) <GMSNavigationScreenMetrics>
 @end

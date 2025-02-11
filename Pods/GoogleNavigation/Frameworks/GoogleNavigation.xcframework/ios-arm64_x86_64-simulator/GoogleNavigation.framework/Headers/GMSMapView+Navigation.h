@@ -23,14 +23,14 @@
 @class GMSRoadSnappedLocationProvider;
 
 /**
- * The value used to clear the @c followingZoomLevel, and reset the camera to adopt the default
+ * The value used to clear the `followingZoomLevel,` and reset the camera to adopt the default
  * zoom behavior.
  */
 FOUNDATION_EXTERN const float GMSNavigationNoFollowingZoomLevel;
 
 NS_ASSUME_NONNULL_BEGIN
 
-/** A delegate for events on GMSMapView related to the navigation UI. */
+/** A delegate for events on `GMSMapView` related to the navigation UI. */
 @protocol GMSMapViewNavigationUIDelegate <NSObject>
 
 @optional
@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface GMSMapView (Navigation)
 
-/** A delegate of GMSMapView which receives callbacks for navigation UI events. */
+/** A delegate of `GMSMapView` which receives callbacks for navigation UI events. */
 @property(nonatomic, weak, nullable) IBOutlet id<GMSMapViewNavigationUIDelegate>
     navigationUIDelegate;
 
@@ -69,16 +69,16 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * If the user has not accepted the Google Navigation terms and conditions, setting this property
  * will have no effect. To show the terms and conditions dialog, see the methods on
- * GMSNavigationServices.
+ * `GMSNavigationServices`.
  */
 @property(nonatomic, assign, getter=isNavigationEnabled) BOOL navigationEnabled;
 
 /**
- * The navigator for this GMSMapView which allows routes to be requested and turn-by-turn guidance
+ * The navigator for this `GMSMapView` which allows routes to be requested and turn-by-turn guidance
  * to be started.
  *
  * If the user has not accepted the Google Navigation terms and conditions, this will be nil. To
- * show the terms and conditions dialog, see the methods on GMSNavigationServices.
+ * show the terms and conditions dialog, see the methods on `GMSNavigationServices`.
  */
 @property(nonatomic, readonly, nullable) GMSNavigator *navigator;
 
@@ -86,7 +86,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Allows subscription to road-snapped location updates.
  *
  * If the user has not accepted the Google Navigation terms and conditions, this will be nil. To
- * show the terms and conditions dialog, see the methods on GMSNavigationServices.
+ * show the terms and conditions dialog, see the methods on `GMSNavigationServices`.
  */
 @property(nonatomic, readonly, nullable)
     GMSRoadSnappedLocationProvider *roadSnappedLocationProvider;
@@ -97,20 +97,20 @@ NS_ASSUME_NONNULL_BEGIN
  * road-snapped location provider.
  *
  * If the user has not accepted the Google Navigation terms and conditions, this will be nil. To
- * show the terms and conditions dialog, see the methods on GMSNavigationServices.
+ * show the terms and conditions dialog, see the methods on `GMSNavigationServices`.
  */
 @property(nonatomic, readonly, nullable) GMSLocationSimulator *locationSimulator;
 
 /**
  * The mode of the camera which determines its behavior when the navigationEnabled property is set
- * to YES. See |GMSNavigationCameraMode| for the available modes.
+ * to YES. See `GMSNavigationCameraMode` for the available modes.
  */
 @property(nonatomic, assign) GMSNavigationCameraMode cameraMode;
 
 /**
  * The camera perspective that will be used when following the device's location. The
- * |navigationEnabled| property must be set to YES and |cameraMode| must be set to
- * GMSNavigationCameraModeFollowing for this perspective to take effect.
+ * `navigationEnabled` property must be set to YES and `cameraMode` must be set to
+ * `GMSNavigationCameraModeFollowing` for this perspective to take effect.
  */
 @property(nonatomic, assign) GMSNavigationCameraPerspective followingPerspective;
 
@@ -121,7 +121,7 @@ NS_ASSUME_NONNULL_BEGIN
  * In driving mode, device course is based on the direction of movement, while in cycling or walking
  * mode the course is based on the compass direction the device is facing. Device course is
  * represented by the direction of the device location marker and reported by the
- * GMSRoadSnappedLocationProvider.
+ * `GMSRoadSnappedLocationProvider`.
  */
 @property(nonatomic, assign) GMSNavigationTravelMode travelMode;
 
@@ -165,8 +165,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * Customized zoom level during navigation. Setting this value will override the default Navigation
- * SDK zoom level when the camera is following device location (i.e. @c cameraMode equals
- * @c GMSNavigationCameraModeFollowing). This can be set to @c GMSNavigationNoFollowingZoomLevel
+ * SDK zoom level when the camera is following device location (i.e. `cameraMode` equals
+ * `GMSNavigationCameraModeFollowing).` This can be set to `GMSNavigationNoFollowingZoomLevel`
  * if no zoom level override should be used.
  */
 @property(nonatomic) float followingZoomLevel;
@@ -179,7 +179,7 @@ NS_ASSUME_NONNULL_BEGIN
  * the road-snapped location from the given location provider instead. To return to the normal
  * behavior, set this property to nil.
  *
- * This has no effect when @c navigationEnabled is on for this map view.
+ * This has no effect when `navigationEnabled` is on for this map view.
  */
 @property(nonatomic, nullable) GMSRoadSnappedLocationProvider *roadSnappedMyLocationSource;
 
@@ -199,29 +199,38 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * Support for smooth gestures when a map is displayed on the CarPlay screen.
  *
- * These methods should be called from the corresponding methods of CPMapTemplateDelegate in order
+ * These methods should be called from the corresponding methods of `CPMapTemplateDelegate` in order
  * to implement gesture-based panning for a MapView showing on a CarPlay screen.
  */
 @interface GMSMapView (CarPlay)
 
 /**
- * This method should be called from the application's implementation of the CPMapTemplateDelegate
- * method -mapTemplateDidBeginPanGesture: in order to implement pan gestures for CarPlay map
+ * This method should be called from the application's implementation of the `CPMapTemplateDelegate`
+ * method `-mapTemplateDidBeginPanGesture:` in order to implement pan gestures for CarPlay map
  * templates.
+ *
+ * This function is in the pre-GA Experimental launch stage
+ * https://developers.google.com/maps/launch-stages#preview.
  */
 - (void)didBeginPanGesture;
 
 /**
- * This method should be called from the application's implementation of the CPMapTemplateDelegate
- * method -mapTemplate:didUpdatePanGestureWithTranslation: in order to implement pan gestures for
+ * This method should be called from the application's implementation of the `CPMapTemplateDelegate`
+ * method `-mapTemplate:didUpdatePanGestureWithTranslation:` in order to implement pan gestures for
  * CarPlay map templates.
+ *
+ * This function is in the pre-GA Experimental launch stage
+ * https://developers.google.com/maps/launch-stages#preview.
  */
 - (void)didUpdatePanGestureWithTranslation:(CGPoint)translation velocity:(CGPoint)velocity;
 
 /**
- * This method should be called from the application's implementation of the CPMapTemplateDelegate
- * method -mapTemplate:didEndPanGestureWithVelocity: in order to implement pan gestures for CarPlay
- * map templates.
+ * This method should be called from the application's implementation of the `CPMapTemplateDelegate`
+ * method `-mapTemplate:didEndPanGestureWithVelocity:` in order to implement pan gestures for
+ * CarPlay map templates.
+ *
+ * This function is in the pre-GA Experimental launch stage
+ * https://developers.google.com/maps/launch-stages#preview.
  */
 - (void)didEndPanGestureWithVelocity:(CGPoint)velocity;
 

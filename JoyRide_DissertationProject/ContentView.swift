@@ -3,11 +3,12 @@
 //  JoyRide_DissertationProject
 //
 //  Created by macbook on 29/12/2024.
+//  Updated to use Google Maps in HomeView on 11/02/2025.
 //
 
 import SwiftUI
-import MapKit
-import CoreLocation // Import CoreLocation for location services
+import GoogleMaps         // Use Google Maps instead of MapKit
+import CoreLocation
 
 struct ContentView: View {
     let username: String
@@ -19,7 +20,7 @@ struct ContentView: View {
             // Display the content of the selected tab
             switch selectedTab {
             case .home:
-                HomeView()
+                HomeView()   // Updated HomeView uses GoogleMapView
             case .route:
                 RouteView()
             case .social:
@@ -54,7 +55,7 @@ struct ContentView: View {
     }
 }
 
-// Define the tabs
+// Define the tabs (no changes needed here)
 enum AppTab {
     case home
     case route
@@ -62,7 +63,7 @@ enum AppTab {
     case settings
 }
 
-// Custom button for the tab bar
+// Custom button for the tab bar (unchanged)
 struct TabButton: View {
     let title: String
     let isActive: Bool // Indicates if this is the active tab
@@ -83,13 +84,11 @@ struct TabButton: View {
     }
 }
 
-// Home View with Dynamic Date, Time, and Exact Location
+// Updated HomeView using GoogleMapView
 struct HomeView: View {
     @StateObject private var locationManager = LocationManager()
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // Default location
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05) // Zoom level
-    )
+    @State private var mapView = GMSMapView()  // Google Maps view instance
+    @State private var userLocation: CLLocationCoordinate2D?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -113,20 +112,23 @@ struct HomeView: View {
             .padding()
             .background(Color(UIColor.systemGray5)) // Light gray background
             .border(Color.black, width: 1)
-
-            // Interactive Map with user location
-            Map(coordinateRegion: $region, showsUserLocation: true)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            // Google Map view using the SwiftUI wrapper defined in your RouteView file.
+            GoogleMapView(mapView: $mapView, userLocation: $userLocation)
                 .border(Color.black, width: 1)
                 .onReceive(locationManager.$lastLocation) { newLocation in
-                    // Update the region whenever the user's location changes
                     if let newLocation = newLocation {
-                        region.center = newLocation.coordinate
+                        userLocation = newLocation.coordinate
+                        // Animate the camera to the updated user location with a zoom level of 15.
+                        let camera = GMSCameraPosition.camera(withLatitude: newLocation.coordinate.latitude,
+                                                              longitude: newLocation.coordinate.longitude,
+                                                              zoom: 15)
+                        mapView.animate(to: camera)
                     }
                 }
         }
         .onAppear {
-            locationManager.requestLocation() // Request user location
+            locationManager.requestLocation() // Request user location on view appearance
         }
     }
     
@@ -140,42 +142,19 @@ struct HomeView: View {
     // Function to get the current date in MM/dd/yyyy format
     func getCurrentDate() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd/yyyy" // Format for the date
+        formatter.dateFormat = "MM/dd/yyyy"
         return formatter.string(from: Date())
     }
     
     // Function to get the current time in HH:mm:ss format
     func getCurrentTime() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss" // 24-hour format for time with seconds
+        formatter.dateFormat = "HH:mm:ss"
         return formatter.string(from: Date())
     }
 }
 
-    
-    // Function to get the current day of the week
-    func getDayOfWeek() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE" // Full name of the day
-        return formatter.string(from: Date())
-    }
-    
-    // Function to get the current date in MM/dd/yyyy format
-    func getCurrentDate() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd/yyyy" // Format for the date
-        return formatter.string(from: Date())
-    }
-    
-    // Function to get the current time in HH:mm:ss format
-    func getCurrentTime() -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss" // 24-hour format for time with seconds
-        return formatter.string(from: Date())
-    }
-
-
-// Location Manager to Handle User Location
+// LocationManager (unchanged)
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     @Published var lastLocation: CLLocation?
@@ -187,14 +166,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func requestLocation() {
-        // Check the current authorisation status
         let status = manager.authorizationStatus
         
         if status == .notDetermined {
-            // Request when-in-use authorisation if not determined
             manager.requestWhenInUseAuthorization()
         } else if status == .authorizedWhenInUse || status == .authorizedAlways {
-            // Start updating location if already authorised
             manager.startUpdatingLocation()
         } else {
             print("Location permission not granted. Please enable it in Settings.")
@@ -203,7 +179,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         if status == .authorizedWhenInUse || status == .authorizedAlways {
-            // Start updating location when authorised
             manager.startUpdatingLocation()
         } else if status == .denied || status == .restricted {
             print("Location access denied. Please enable it in Settings.")
@@ -218,35 +193,3 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         print("Failed to find user’s location: \(error.localizedDescription)")
     }
 }
-
-
-// Placeholder View for other tabs
-struct PlaceholderView: View {
-    let title: String
-
-    var body: some View {
-        VStack {
-            Spacer()
-            Text("\(title) Page")
-                .font(.largeTitle)
-                .foregroundColor(.gray)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
-        .border(Color.black, width: 1)
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView(username: "PreviewUser")
-    }
-}
-
-
-
-
-
-
-

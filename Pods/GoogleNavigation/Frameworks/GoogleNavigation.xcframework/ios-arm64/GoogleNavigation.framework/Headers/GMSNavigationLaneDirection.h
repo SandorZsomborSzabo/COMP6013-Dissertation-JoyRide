@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 /** Information about a single lane direction during navigation. */
 @interface GMSNavigationLaneDirection : NSObject
 
-/** Returns the @c GMSNavigationLaneShape for this lane direction. */
+/** Returns the `GMSNavigationLaneShape` for this lane direction. */
 @property(nonatomic, readonly) GMSNavigationLaneShape laneShape;
 
 /** Whether this lane direction is recommended or not. */

@@ -21,14 +21,14 @@ NS_ASSUME_NONNULL_BEGIN
 /** Information about a single step along a navigation route. */
 @interface GMSNavigationStepInfo : NSObject
 
-/** The @c GMSNavigationManeuver for this step. */
+/** The `GMSNavigationManeuver` for this step. */
 @property(nonatomic, readonly) GMSNavigationManeuver maneuver;
 
 /**
  * The UIImage for the maneuver of this step using provided options. Default options values will be
  * used if the options parameter is nil.
  *
- * Returns nil if there is no maneuver image for this step.
+ * @return `nil` if there is no maneuver image for this step.
  */
 - (nullable UIImage *)maneuverImageWithOptions:
     (nullable GMSNavigationStepInfoImageOptions *)options;
@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
  * The array is ordered such that the first lane is on the left and last lane is on the right
  * regardless of driving side.
  *
- * Returns nil if there is no lane guidance for this step.
+ * @return `nil` if there is no lane guidance for this step.
  */
 @property(nonatomic, nullable, readonly) NSArray<GMSNavigationLane *> *lanes;
 
@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
  * The UIImage for the lane guidance of this step using provided options. Default options values
  * will be used if the options parameter is nil.
  *
- * Returns nil if there is no lane guidance for this step.
+ * @return `nil` if there is no lane guidance for this step.
  */
 - (nullable UIImage *)lanesImageWithOptions:(nullable GMSNavigationStepInfoImageOptions *)options;
 
