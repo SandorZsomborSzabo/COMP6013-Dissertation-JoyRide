@@ -15,103 +15,140 @@ struct SettingsView: View {
     // State for showing the popup and tracking user input
     @State private var showDeleteConfirmation = false
     @State private var typedDelete = ""
-
+    
+    // Define a green gradient for styling
+    private var greenGradient: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+    
     var body: some View {
         ZStack {
-            // 1. Main settings content
+            // Set the background to black for dark mode.
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            // Main settings content.
             VStack(spacing: 20) {
                 Text("Settings")
                     .font(.largeTitle)
+                    .foregroundColor(.white)
                     .padding()
-
+                
                 Button(action: logOut) {
                     Text("Log Out")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(greenGradient)
+                        )
                         .foregroundColor(.white)
-                        .cornerRadius(5)
                 }
-
-                // Pressing this will show the confirmation popup
+                
                 Button(action: {
                     showDeleteConfirmation = true
                 }) {
                     Text("Delete Account")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.red)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(greenGradient)
+                        )
                         .foregroundColor(.white)
-                        .cornerRadius(5)
                 }
-
+                
                 Spacer()
             }
             .padding()
-
-            // 2. The popup overlay when showDeleteConfirmation == true
+            
+            // Popup overlay for account deletion confirmation.
             if showDeleteConfirmation {
-                // A semi-transparent background to dim the underlying view
+                // Dim background overlay.
                 Rectangle()
                     .fill(Color.black.opacity(0.4))
                     .edgesIgnoringSafeArea(.all)
                     .onTapGesture {
-                        // If you want the user to tap outside to dismiss, uncomment:
+                        // Optionally allow tap-outside to dismiss.
                         // showDeleteConfirmation = false
                     }
-
-                // 3. The actual popup box
+                
+                // Popup box.
                 VStack(spacing: 20) {
                     Text("Type DELETE to confirm")
                         .font(.headline)
+                        .foregroundColor(.white)
                     
                     TextField("DELETE", text: $typedDelete)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.black)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(greenGradient, lineWidth: 1)
+                        )
+                        .foregroundColor(.white)
                         .padding(.horizontal)
                     
                     HStack {
                         Button("Cancel") {
-                            // Reset input and hide popup
+                            // Reset input and hide popup.
                             typedDelete = ""
                             showDeleteConfirmation = false
                         }
-                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(greenGradient)
+                        )
+                        .foregroundColor(.white)
                         
                         Button("Confirm") {
-                            // Call delete logic if typedDelete == "DELETE"
                             if typedDelete == "DELETE" {
                                 deleteAccount(for: username)
                             }
-                            // Dismiss popup regardless
+                            // Dismiss popup regardless.
                             typedDelete = ""
                             showDeleteConfirmation = false
                         }
-                        // Disable the confirm button unless typedDelete == "DELETE"
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(typedDelete == "DELETE" ? Color.green : Color.gray)
+                        )
+                        .foregroundColor(.white)
                         .disabled(typedDelete != "DELETE")
-                        .foregroundColor(typedDelete == "DELETE" ? .red : .gray)
                     }
+                    .padding(.horizontal)
                 }
                 .padding()
-                .background(Color.white)
+                .background(Color.black)
                 .cornerRadius(12)
                 .shadow(radius: 6)
-                .padding(.horizontal, 40)  
+                .padding(.horizontal, 40)
             }
         }
     }
     
+    // MARK: - Helper Functions
+    
     func setUserOnlineStatus(username: String, isOnline: Bool) {
         guard let db = LoginRegisterView.database else { return }
-
-
+        
         let updateQuery = "UPDATE Users SET isOnline = ? WHERE username = ?;"
         var statement: OpaquePointer? = nil
-
+        
         if sqlite3_prepare_v2(db, updateQuery, -1, &statement, nil) == SQLITE_OK {
-            // Convert Bool to Int: 1 or 0
             sqlite3_bind_int(statement, 1, isOnline ? 1 : 0)
             sqlite3_bind_text(statement, 2, (username as NSString).utf8String, -1, nil)
-
+            
             if sqlite3_step(statement) == SQLITE_DONE {
                 print("Updated isOnline = \(isOnline) for user \(username)")
             } else {
@@ -120,24 +157,23 @@ struct SettingsView: View {
         }
         sqlite3_finalize(statement)
     }
-
-
-    // Log out action
+    
+    // Log out action.
     private func logOut() {
         isAuthenticated = false
         UIApplication.shared.windows.first?.rootViewController =
             UIHostingController(rootView: LoginRegisterView())
         setUserOnlineStatus(username: username, isOnline: false)
     }
-
+    
     private func deleteAccount(for username: String) {
         guard let db = LoginRegisterView.database else { return }
         let deleteQuery = "DELETE FROM Users WHERE username = ?;"
         var statement: OpaquePointer? = nil
-
+        
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (username as NSString).utf8String, -1, nil)
-
+            
             if sqlite3_step(statement) == SQLITE_DONE {
                 print("Account deleted successfully")
                 isAuthenticated = false
@@ -149,7 +185,7 @@ struct SettingsView: View {
         } else {
             print("Failed to prepare delete statement")
         }
-
+        
         sqlite3_finalize(statement)
     }
 }
