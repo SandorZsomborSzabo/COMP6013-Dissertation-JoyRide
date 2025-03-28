@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import GoogleMaps         // Use Google Maps instead of MapKit
+import GoogleMaps
 import CoreLocation
 
 struct ContentView: View {
@@ -29,27 +29,27 @@ struct ContentView: View {
                 SettingsView(username: username, isAuthenticated: $isAuthenticated)
             }
 
-            // Tab bar
+            // Tab bar with dark background and green-themed buttons
             HStack(spacing: 0) {
                 TabButton(title: "Home", isActive: selectedTab == .home) {
                     selectedTab = .home
                 }
-                Divider()
+                Divider().background(Color.green)
                 TabButton(title: "Route", isActive: selectedTab == .route) {
                     selectedTab = .route
                 }
-                Divider()
+                Divider().background(Color.green)
                 TabButton(title: "Social", isActive: selectedTab == .social) {
                     selectedTab = .social
                 }
-                Divider()
+                Divider().background(Color.green)
                 TabButton(title: "Settings", isActive: selectedTab == .settings) {
                     selectedTab = .settings
                 }
             }
             .frame(height: 100) // Height of the tab bar
-            .background(Color(UIColor.systemGray5))
-            .border(Color.black, width: 1)
+            .background(Color.black)
+            .border(Color.green, width: 1)
         }
         .edgesIgnoringSafeArea(.bottom) // Ensure the tab bar sits at the bottom
     }
@@ -63,28 +63,43 @@ enum AppTab {
     case settings
 }
 
-// Custom button for the tab bar (unchanged)
+// Custom button for the tab bar with dark mode styling and green theme
 struct TabButton: View {
     let title: String
     let isActive: Bool // Indicates if this is the active tab
     let action: () -> Void
 
+    // Define a green gradient similar to the one used in RouteView
+    private var greenGradient: LinearGradient {
+        LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]),
+                       startPoint: .leading, endPoint: .trailing)
+    }
+    
+    // Computed property to return an AnyShapeStyle so both branches of the ternary operator match
+    private var fillStyle: AnyShapeStyle {
+        if isActive {
+            return AnyShapeStyle(greenGradient)
+        } else {
+            return AnyShapeStyle(Color.clear)
+        }
+    }
+    
     var body: some View {
         Button(action: action) {
             ZStack {
                 Rectangle()
-                    .fill(isActive ? Color.gray : Color.clear) // Active tab is slightly darker
+                    .fill(fillStyle)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(isActive ? Color.white : Color.green)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-// Updated HomeView using GoogleMapView
+// Updated HomeView using GoogleMapView with dark header styling
 struct HomeView: View {
     @StateObject private var locationManager = LocationManager()
     @State private var mapView = GMSMapView()  // Google Maps view instance
@@ -92,26 +107,29 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header with real-time date and time
+            // Header with real-time date and time in dark mode
             HStack {
                 Text(getDayOfWeek())
                     .font(.headline)
+                    .foregroundColor(.white)
                     .padding(.leading)
                 
                 Spacer()
                 
                 Text(getCurrentDate())
                     .font(.headline)
+                    .foregroundColor(.white)
                 
                 Spacer()
                 
                 Text(getCurrentTime())
                     .font(.headline)
+                    .foregroundColor(.white)
                     .padding(.trailing)
             }
             .padding()
-            .background(Color(UIColor.systemGray5)) // Light gray background
-            .border(Color.black, width: 1)
+            .background(Color.black)
+            .border(Color.green, width: 1)
             
             // Google Map view using the SwiftUI wrapper defined in your RouteView file.
             GoogleMapView(mapView: $mapView, userLocation: $userLocation)

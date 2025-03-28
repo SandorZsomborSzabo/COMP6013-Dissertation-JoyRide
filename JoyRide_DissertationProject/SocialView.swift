@@ -24,40 +24,54 @@ struct SocialView: View {
     // For alerts
     @State private var showAlert = false
     @State private var alertMessage = ""
-
+    
+    // Green gradient used throughout the view
+    private var greenGradient: LinearGradient {
+        LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]),
+                       startPoint: .leading, endPoint: .trailing)
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            // A horizontal bar with 3 "tabs": Friends, Groups, Discover
+            // Top horizontal tab bar with dark background and green-styled buttons
             HStack(spacing: 0) {
-                TabButton(title: "Friends", isActive: selectedTab == .friends) {
+                SocialTabButton(title: "Friends", isActive: selectedTab == .friends) {
                     selectedTab = .friends
                 }
-                Divider()
-                TabButton(title: "Groups", isActive: selectedTab == .groups) {
+                Divider().background(Color.green)
+                SocialTabButton(title: "Groups", isActive: selectedTab == .groups) {
                     selectedTab = .groups
                 }
-                Divider()
-                TabButton(title: "Discover", isActive: selectedTab == .discover) {
+                Divider().background(Color.green)
+                SocialTabButton(title: "Discover", isActive: selectedTab == .discover) {
                     selectedTab = .discover
                 }
             }
             .frame(height: 50)
-            .border(Color.black, width: 1)
+            .background(Color.black)
+            .overlay(RoundedRectangle(cornerRadius: 0)
+                        .stroke(Color.green, lineWidth: 1))
             
-            // Show different views based on which tab is selected
-            switch selectedTab {
-            case .friends:
-                friendsSection
-            case .groups:
-                groupsSection
-            case .discover:
-                discoverSection
+            // Main content based on selected tab
+            Group {
+                switch selectedTab {
+                case .friends:
+                    friendsSection
+                case .groups:
+                    groupsSection
+                case .discover:
+                    discoverSection
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black)
         }
+        .background(Color.black)
         .edgesIgnoringSafeArea(.bottom)
         .onAppear {
-            // Load the friend list from DB whenever this view appears
+            // Load the friend list and perform an online backup of the DB whenever this view appears.
             fetchFriends()
+            performDatabaseBackup()
         }
         .alert(isPresented: $showAlert) {
             Alert(
@@ -71,52 +85,98 @@ struct SocialView: View {
     // MARK: - Friends Section
     
     private var friendsSection: some View {
-        VStack(spacing: 0) {
-            // Display how many friends are online
+        VStack(spacing: 16) {
+            // Active friends counter styled with rounded green border
             let activeFriendCount = friendList.filter { $0.isOnline }.count
             Text("Active friends: \(activeFriendCount)")
                 .font(.headline)
+                .foregroundColor(.white)
                 .padding()
-                .border(Color.black, width: 1)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.black)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.green, lineWidth: 1)
+                )
+                .padding(.horizontal)
             
-            // A row with a text field and "Add Friend" button
+            // A row with a search text field and "Add Friend" button
             HStack {
                 TextField("Search username to add", text: $searchUsername)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.black)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.green, lineWidth: 1)
+                    )
+                    .foregroundColor(.white)
+                    .padding(.leading)
                 
-                Button("Add Friend") {
+                Button(action: {
                     addFriend(searchUsername)
+                }) {
+                    Text("Add Friend")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: 120)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(greenGradient)
+                        )
                 }
                 .padding(.trailing)
             }
             
-            // Show the user's friend list in a scrollable list
-            // Each row shows username + "Online"/"Offline" + Chat button
+            // Friend list displayed in a List
             List(friendList, id: \.username) { friend in
                 HStack {
                     Text(friend.username)
+                        .foregroundColor(.white)
                     Text(friend.isOnline ? "(Online)" : "(Offline)")
                         .foregroundColor(friend.isOnline ? .green : .red)
                     
                     Spacer()
                     
                     Button("Chat") {
-                        // Chat action
+                        // Chat action here
                         print("Chat with \(friend.username)")
                     }
+                    .padding(6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(greenGradient)
+                    )
+                    .foregroundColor(.white)
                 }
+                .listRowBackground(Color.black)
             }
+            .listStyle(PlainListStyle())
             
             Spacer()
             
-            // A "Discover" button that switches to the Discover tab
-            Button("Discover") {
+            // "Discover" button to switch tabs, styled with green gradient and rounded corners
+            Button(action: {
                 selectedTab = .discover
+            }) {
+                Text("Discover")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(greenGradient)
+                    )
+                    .padding(.horizontal)
             }
-            .padding()
-            .border(Color.black, width: 1)
         }
+        .padding(.vertical)
     }
     
     // MARK: - Groups Section
@@ -129,7 +189,11 @@ struct SocialView: View {
                 .foregroundColor(.gray)
             Spacer()
         }
-        .border(Color.black, width: 1)
+        .background(Color.black)
+        .overlay(
+            RoundedRectangle(cornerRadius: 0)
+                .stroke(Color.green, lineWidth: 1)
+        )
     }
     
     // MARK: - Discover Section
@@ -142,20 +206,17 @@ struct SocialView: View {
                 .foregroundColor(.gray)
             Spacer()
         }
-        .border(Color.black, width: 1)
+        .background(Color.black)
+        .overlay(
+            RoundedRectangle(cornerRadius: 0)
+                .stroke(Color.green, lineWidth: 1)
+        )
     }
     
     // MARK: - Database Helpers
     
-    /// Fetch all friends of `currentUsername` from the Friends table,
-    /// along with their online/offline status from Users.
     private func fetchFriends() {
         guard let db = LoginRegisterView.database else { return }
-        
-        // We'll join the `Friends` table with `Users` so we can get isOnline.
-        // We join the entire `Users` row of the "other" user (the friend).
-        // f.user1, f.user2 => the pair
-        // If f.user1 = current user, the friend is f.user2, and vice versa.
         
         let query = """
         SELECT 
@@ -169,27 +230,16 @@ struct SocialView: View {
         
         var statement: OpaquePointer? = nil
         
-        // We'll bind `currentUsername` 4 times:
-        //  1) for the CASE logic
-        //  2) again for the CASE logic
-        //  3) for WHERE
-        //  4) for WHERE
         if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
-            // 1) friendName
             sqlite3_bind_text(statement, 1, (currentUsername as NSString).utf8String, -1, nil)
-            // 2) u.username
             sqlite3_bind_text(statement, 2, (currentUsername as NSString).utf8String, -1, nil)
-            // 3) WHERE f.user1 = ?
             sqlite3_bind_text(statement, 3, (currentUsername as NSString).utf8String, -1, nil)
-            // 4) WHERE f.user2 = ?
             sqlite3_bind_text(statement, 4, (currentUsername as NSString).utf8String, -1, nil)
             
             var fetchedFriends: [FriendInfo] = []
             
             while sqlite3_step(statement) == SQLITE_ROW {
-                // friendName
                 let friendNameCStr = sqlite3_column_text(statement, 0)
-                // isOnline
                 let isOnlineInt = sqlite3_column_int(statement, 1)
                 
                 if let friendNameCStr = friendNameCStr {
@@ -210,25 +260,21 @@ struct SocialView: View {
         sqlite3_finalize(statement)
     }
     
-    /// Add a friend, but only if that user exists in the Users table
     private func addFriend(_ newFriend: String) {
         guard let db = LoginRegisterView.database else { return }
         
-        // Prevent adding yourself
         if newFriend.lowercased() == currentUsername.lowercased() {
             alertMessage = "You cannot add yourself as a friend."
             showAlert = true
             return
         }
         
-        // 1) Check if user exists in the Users table
         guard userExists(newFriend) else {
             alertMessage = "No user found with that username."
             showAlert = true
             return
         }
         
-        // 2) Insert a row into Friends table (user1 = currentUsername, user2 = newFriend)
         let insertQuery = "INSERT OR IGNORE INTO Friends (user1, user2) VALUES (?, ?);"
         var statement: OpaquePointer? = nil
         
@@ -238,8 +284,8 @@ struct SocialView: View {
             
             if sqlite3_step(statement) == SQLITE_DONE {
                 print("Friend added: \(newFriend)")
-                // Refresh the friend list
                 fetchFriends()
+                performDatabaseBackup()
             } else {
                 alertMessage = "Could not add friend for unknown reason."
                 showAlert = true
@@ -252,7 +298,6 @@ struct SocialView: View {
         sqlite3_finalize(statement)
     }
     
-    /// Check if a user by this username exists in the Users table
     private func userExists(_ userToCheck: String) -> Bool {
         guard let db = LoginRegisterView.database else { return false }
         
@@ -264,7 +309,6 @@ struct SocialView: View {
             sqlite3_bind_text(statement, 1, (userToCheck as NSString).utf8String, -1, nil)
             
             if sqlite3_step(statement) == SQLITE_ROW {
-                // Found at least one row => user exists
                 return true
             }
         } else {
@@ -272,38 +316,83 @@ struct SocialView: View {
         }
         return false
     }
+    
+    private func performDatabaseBackup() {
+        guard let sourceDB = LoginRegisterView.database else {
+            print("Source database not available")
+            return
+        }
+        
+        let backupFileName = "backup.db"
+        let fileManager = FileManager.default
+        guard let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            print("Documents directory not found")
+            return
+        }
+        let backupURL = documentsDir.appendingPathComponent(backupFileName)
+        
+        var backupDB: OpaquePointer? = nil
+        if sqlite3_open(backupURL.path, &backupDB) == SQLITE_OK {
+            if let backup = sqlite3_backup_init(backupDB, "main", sourceDB, "main") {
+                let result = sqlite3_backup_step(backup, -1)
+                if result == SQLITE_DONE {
+                    print("Backup completed successfully to \(backupURL.path).")
+                } else {
+                    print("Backup step returned result \(result).")
+                }
+                sqlite3_backup_finish(backup)
+            } else {
+                print("Failed to initialize backup.")
+            }
+            sqlite3_close(backupDB)
+        } else {
+            print("Failed to open backup database at \(backupURL.path).")
+        }
+    }
 }
 
 // MARK: - Additional Types
 
-/// Which top tab is selected
 enum SocialTab {
     case friends
     case groups
     case discover
 }
 
-/// Basic struct to hold friend info
 struct FriendInfo {
     let username: String
     let isOnline: Bool
 }
 
-/// Basic tab button (reusing the one from ContentView is fine)
+/// Custom tab button for the social view header using type-erased fill style.
 struct SocialTabButton: View {
     let title: String
     let isActive: Bool
     let action: () -> Void
-
+    
+    private var greenGradient: LinearGradient {
+        LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]),
+                       startPoint: .leading, endPoint: .trailing)
+    }
+    
+    private var fillStyle: AnyShapeStyle {
+        if isActive {
+            return AnyShapeStyle(greenGradient)
+        } else {
+            return AnyShapeStyle(Color.clear)
+        }
+    }
+    
     var body: some View {
         Button(action: action) {
             ZStack {
                 Rectangle()
-                    .fill(isActive ? Color.gray : Color.clear)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .fill(fillStyle)
+                    .cornerRadius(8)
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(isActive ? .white : .green)
+                    .padding(8)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -3,7 +3,6 @@
 //  JoyRide_DissertationProject
 //
 //  Created by macbook on 27/01/2025.
-//  Updated for round-trip route visibility and custom map styling on 11/02/2025.
 //
 
 import SwiftUI
@@ -15,47 +14,43 @@ import AVFoundation
 import GoogleNavigation
 
 // MARK: - CurvatureOption (Picker)
-/// Added a "noCurve" option
 enum CurvatureOption: String, CaseIterable {
     case noCurve = "Less Curved"
     case lessCurved = "Curved"   // c_300 (≥300)
     case moreCurved = "More Curved"   // c_1000 (≥1000)
 }
 
+// MARK: - ElevationOption (Picker)
+enum ElevationOption: String, CaseIterable {
+    case noElevation = "No Elevation"
+    case lessElevation = "Less Elevation"
+    case moreElevation = "More Elevation"
+}
+
 // MARK: - RoadSegment Model
 struct RoadSegment {
     let coordinates: [CLLocationCoordinate2D]
     
-    // Midpoint for approximate distance checking
     var midpoint: CLLocationCoordinate2D {
-        guard !coordinates.isEmpty else {
-            return .init(latitude: 0, longitude: 0)
-        }
+        guard !coordinates.isEmpty else { return .init(latitude: 0, longitude: 0) }
         let midIndex = coordinates.count / 2
         return coordinates[midIndex]
     }
     
-    /// Return a random coordinate along this segment
     func randomCoordinate() -> CLLocationCoordinate2D? {
-        guard coordinates.count > 1 else {
-            return coordinates.first
-        }
+        guard coordinates.count > 1 else { return coordinates.first }
         let index = Int.random(in: 0..<coordinates.count)
         return coordinates[index]
     }
     
-    /// Create a RoadSegment from a KML <coordinates> string
     static func fromKMLLineString(_ lineString: String) -> RoadSegment? {
-        // Typical KML: "longitude,latitude,alt ... longitude,latitude,alt"
         let pairs = lineString.components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
-        
         var coords: [CLLocationCoordinate2D] = []
         for pair in pairs {
             let nums = pair.split(separator: ",").compactMap { Double($0) }
             if nums.count >= 2 {
-                let lon = nums[0]
-                let lat = nums[1]
+                let lon = nums[0], lat = nums[1]
                 coords.append(.init(latitude: lat, longitude: lon))
             }
         }
@@ -64,16 +59,13 @@ struct RoadSegment {
 }
 
 // MARK: - KMLParser (Minimal)
-/// Simple parser extracting <coordinates> from <LineString> in a KML
 class KMLParser: NSObject, XMLParserDelegate {
-    private var currentElement: String = ""
-    private var currentCoordinates: String = ""
+    private var currentElement = ""
+    private var currentCoordinates = ""
     private var lineStrings: [String] = []
     
     func parseKML(from url: URL) -> [String]? {
-        guard let parser = XMLParser(contentsOf: url) else {
-            return nil
-        }
+        guard let parser = XMLParser(contentsOf: url) else { return nil }
         parser.delegate = self
         let success = parser.parse()
         return success ? lineStrings : nil
@@ -180,14 +172,22 @@ struct OverviewPolyline: Codable {
     let points: String
 }
 
+// MARK: - Elevation Response Models
+struct ElevationResponse: Codable {
+    let results: [ElevationResult]
+    let status: String
+}
+
+struct ElevationResult: Codable {
+    let elevation: Double
+}
+
 // MARK: - GoogleNavigationManager
 class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var isNavigating = false
-    
-    // Retained from older code
     @Published var steps: [Step] = []
     @Published var currentStepIndex: Int = 0
     @Published var polyline: GMSPolyline?
@@ -198,42 +198,37 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
     
-    // Request location permission
     func requestPermission() {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
     
-    // Start navigation (Google Navigation SDK) for a single destination – kept for backward compatibility.
+    // Single destination navigation
     func startNavigation(to destination: CLLocationCoordinate2D, on mapView: GMSMapView) {
         guard let waypoint = GMSNavigationWaypoint(location: destination, title: "Destination") else {
             print("Failed to create navigation waypoint.")
             return
         }
-        
         mapView.navigator?.setDestinations([waypoint]) { routeStatus in
             guard routeStatus == .OK else {
                 print("Route error: \(routeStatus)")
                 return
             }
-            
             mapView.navigator?.isGuidanceActive = true
             mapView.cameraMode = .following
-            
             DispatchQueue.main.async {
                 self.isNavigating = true
             }
         }
     }
     
-    // Start round-trip navigation with multiple waypoints.
+    // Round-trip navigation
     func startRoundTripNavigation(with waypoints: [CLLocationCoordinate2D], on mapView: GMSMapView) {
         let navWaypoints = waypoints.compactMap { GMSNavigationWaypoint(location: $0, title: "") }
         guard !navWaypoints.isEmpty else {
             print("Failed to create navigation waypoints.")
             return
         }
-        
         mapView.navigator?.setDestinations(navWaypoints) { routeStatus in
             guard routeStatus == .OK else {
                 print("Route error: \(routeStatus)")
@@ -241,18 +236,15 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
             }
             mapView.navigator?.isGuidanceActive = true
             mapView.cameraMode = .following
-            
             DispatchQueue.main.async {
                 self.isNavigating = true
             }
         }
     }
     
-    // Stop navigation
     func stopNavigation(on mapView: GMSMapView) {
         mapView.navigator?.isGuidanceActive = false
         mapView.cameraMode = .free
-        
         DispatchQueue.main.async {
             self.isNavigating = false
             self.polyline?.map = nil
@@ -262,7 +254,7 @@ class GoogleNavigationManager: NSObject, ObservableObject, CLLocationManagerDele
         }
     }
     
-    // MARK: CLLocationManagerDelegate
+    // MARK: - CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         userLocation = locations.last?.coordinate
     }
@@ -277,7 +269,7 @@ extension GMSMapView {
         do {
             if let styleURL = Bundle.main.url(forResource: fileName, withExtension: "json") {
                 self.mapStyle = try GMSMapStyle(contentsOfFileURL: styleURL)
-                //print("\(fileName).json successfully loaded.")
+                print("\(fileName).json successfully loaded.")
             } else {
                 print("Unable to find \(fileName).json in the main bundle")
             }
@@ -288,132 +280,243 @@ extension GMSMapView {
 }
 
 // MARK: - GoogleMapView (SwiftUI Wrapper)
-// This updated wrapper re-applies the custom style in updateUIView and via a delegate callback.
 struct GoogleMapView: UIViewRepresentable {
     @Binding var mapView: GMSMapView
     @Binding var userLocation: CLLocationCoordinate2D?
+    
+    func makeUIView(context: Context) -> GMSMapView {
+        mapView.settings.myLocationButton = true
+        mapView.isMyLocationEnabled = true
+        mapView.loadMapStyle(named: "dark_yellow_map_style")
+        mapView.delegate = context.coordinator
+        return mapView
+    }
+    
+    func updateUIView(_ mapView: GMSMapView, context: Context) {
+        mapView.loadMapStyle(named: "dark_yellow_map_style")
+    }
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
     
-    func makeUIView(context: Context) -> GMSMapView {
-        mapView.settings.myLocationButton = true
-        mapView.isMyLocationEnabled = true
-        // Set the delegate to our coordinator
-        mapView.delegate = context.coordinator
-        // Apply the custom style initially.
-        mapView.loadMapStyle(named: "dark_yellow_map_style")
-        return mapView
-    }
-    
-    func updateUIView(_ mapView: GMSMapView, context: Context) {
-        // Reapply the style on every update.
-        mapView.loadMapStyle(named: "dark_yellow_map_style")
-    }
-    
     class Coordinator: NSObject, GMSMapViewDelegate {
         var parent: GoogleMapView
-        
         init(_ parent: GoogleMapView) {
             self.parent = parent
         }
-        
         func mapViewDidFinishTileRendering(_ mapView: GMSMapView) {
-            // Once tile rendering finishes, try reapplying the style.
             mapView.loadMapStyle(named: "dark_yellow_map_style")
         }
     }
 }
 
+// MARK: - StyledGoogleMapView (Container)
+struct StyledGoogleMapView: UIViewControllerRepresentable {
+    @Binding var mapView: GMSMapView
+    @Binding var userLocation: CLLocationCoordinate2D?
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = MapViewController()
+        vc.mapView = mapView
+        return vc
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        if let vc = uiViewController as? MapViewController {
+            vc.mapView.loadMapStyle(named: "dark_yellow_map_style")
+        }
+    }
+}
+
+class MapViewController: UIViewController, GMSMapViewDelegate {
+    var mapView: GMSMapView!
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        mapView.delegate = self
+        mapView.settings.myLocationButton = true
+        mapView.isMyLocationEnabled = true
+        view.addSubview(mapView)
+        mapView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            mapView.topAnchor.constraint(equalTo: view.topAnchor),
+            mapView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            mapView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mapView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        mapView.loadMapStyle(named: "dark_yellow_map_style")
+    }
+    
+    func mapViewDidFinishTileRendering(_ mapView: GMSMapView) {
+        mapView.loadMapStyle(named: "dark_yellow_map_style")
+    }
+}
+
 // MARK: - RouteView
 struct RouteView: View {
+    // Setting the tab bar tint in the initializer makes the bottom tab buttons green.
+    init() {
+        UITabBar.appearance().tintColor = UIColor.green
+    }
+    
     @StateObject private var navManager = GoogleNavigationManager()
     @State private var mapView = GMSMapView()
+    @State private var showFilters: Bool = true  // Toggle filters visibility
     
-    // Time selection (30, 60, or 90 minutes)
+    // Time selection
     @State private var selectedTime: Int = 30
     
-    // Curvature selection (includes "noCurve")
+    // Curvature selection
     @State private var selectedCurvatureThreshold: CurvatureOption = .noCurve
     
-    // Destination (for the outbound leg) and startLocation (to remember where we began)
+    // Elevation selection
+    @State private var selectedElevationOption: ElevationOption = .noElevation
+    
+    // Destination & start
     @State private var destination: CLLocationCoordinate2D?
     @State private var startLocation: CLLocationCoordinate2D?
     
-    // Array of road segments from KML (used for lessCurved / moreCurved)
+    // Road segments
     @State private var roadSegments: [RoadSegment] = []
     
-    // Polylines for outbound, return, and the combined round-trip route
+    // Polylines
     @State private var outboundPolyline: GMSPolyline?
     @State private var returnPolyline: GMSPolyline?
     @State private var combinedPolyline: GMSPolyline?
     
+    // Define the green gradient
+    private var greenGradient: LinearGradient {
+        LinearGradient(gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green]),
+                       startPoint: .leading, endPoint: .trailing)
+    }
+    
     var body: some View {
-        VStack {
-            // Time Picker (30, 60, or 90 minutes)
-            Picker("Trip Duration", selection: $selectedTime) {
-                Text("30 Min").tag(30)
-                Text("60 Min").tag(60)
-                Text("90 Min").tag(90)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
+        ZStack {
+            // Background gradient
+            LinearGradient(gradient: Gradient(colors: [Color.black, Color(red: 0.0, green: 0.15, blue: 0.0)]),
+                           startPoint: .top, endPoint: .bottom)
+                .edgesIgnoringSafeArea(.all)
             
-            // Curvature Picker (No Curve, Less Curved, More Curved)
-            Picker("Curvature", selection: $selectedCurvatureThreshold) {
-                ForEach(CurvatureOption.allCases, id: \.self) { option in
-                    Text(option.rawValue).tag(option)
+            VStack(spacing: 16) {
+                // Toggle button for showing/hiding filters
+                HStack {
+                    Button(action: {
+                        withAnimation {
+                            showFilters.toggle()
+                        }
+                    }) {
+                        Text(showFilters ? "Hide Filters" : "Show Filters")
+                            .padding(8)
+                            .background(greenGradient)
+                            .cornerRadius(8)
+                            .foregroundColor(.white)
+                    }
+                    Spacer()
                 }
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding()
-            .onChange(of: selectedCurvatureThreshold) { _ in
-                if selectedCurvatureThreshold == .noCurve {
-                    roadSegments = []
-                } else {
-                    loadLocalKML()
-                }
-            }
-            
-            // Control Buttons
-            HStack {
-                Button("Generate Route") {
-                    generateRoute()
-                }
-                .padding()
+                .padding(.horizontal)
                 
-                Button(navManager.isNavigating ? "Stop Navigation" : "Start Navigation") {
-                    if navManager.isNavigating {
-                        navManager.stopNavigation(on: mapView)
-                    } else if let dest = destination, let start = startLocation {
-                        // Start round-trip navigation using two waypoints:
-                        navManager.startRoundTripNavigation(with: [dest, start], on: mapView)
+                // Filters UI
+                if showFilters {
+                    VStack(spacing: 16) {
+                        // Time Picker
+                        Picker("Trip Duration", selection: $selectedTime) {
+                            Text("30 Min").tag(30)
+                            Text("60 Min").tag(60)
+                            Text("90 Min").tag(90)
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .padding(8)
+                        .background(greenGradient)
+                        .cornerRadius(8)
+                        .tint(.white)
+                        
+                        // Curvature Picker
+                        Picker("Curvature", selection: $selectedCurvatureThreshold) {
+                            ForEach(CurvatureOption.allCases, id: \.self) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .padding(8)
+                        .background(greenGradient)
+                        .cornerRadius(8)
+                        .tint(.white)
+                        .onChange(of: selectedCurvatureThreshold) { _ in
+                            if selectedCurvatureThreshold == .noCurve {
+                                roadSegments = []
+                            } else {
+                                loadLocalKML()
+                            }
+                        }
+                        
+                        // Elevation Picker
+                        Picker("Elevation", selection: $selectedElevationOption) {
+                            ForEach(ElevationOption.allCases, id: \.self) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .padding(8)
+                        .background(greenGradient)
+                        .cornerRadius(8)
+                        .tint(.white)
+                        
+                        // Control Buttons
+                        HStack(spacing: 16) {
+                            Button("Generate Route") {
+                                generateRoute()
+                            }
+                            .padding()
+                            .background(greenGradient)
+                            .cornerRadius(10)
+                            .foregroundColor(.white)
+                            .font(.system(.headline, design: .rounded))
+                            
+                            Button(navManager.isNavigating ? "Stop Navigation" : "Start Navigation") {
+                                if navManager.isNavigating {
+                                    navManager.stopNavigation(on: mapView)
+                                } else if let dest = destination, let start = startLocation {
+                                    navManager.startRoundTripNavigation(with: [dest, start], on: mapView)
+                                }
+                            }
+                            .padding()
+                            .background(
+                                navManager.isNavigating
+                                ? LinearGradient(gradient: Gradient(colors: [Color.red.opacity(0.7), Color.red]),
+                                                 startPoint: .leading, endPoint: .trailing)
+                                : greenGradient
+                            )
+                            .cornerRadius(10)
+                            .foregroundColor(.white)
+                            .font(.system(.headline, design: .rounded))
+                        }
                     }
                 }
-                .padding()
-                .background(navManager.isNavigating ? Color.red : Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                
+                // Google Map View expands to fill remaining space
+                StyledGoogleMapView(mapView: $mapView, userLocation: $navManager.userLocation)
+                    .edgesIgnoringSafeArea(.bottom)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        let companyName = "Your Company Name"
+                        GMSNavigationServices.showTermsAndConditionsDialogIfNeeded(withCompanyName: companyName) { accepted in
+                            mapView.isNavigationEnabled = accepted
+                        }
+                        navManager.requestPermission()
+                        if selectedCurvatureThreshold != .noCurve {
+                            loadLocalKML()
+                        }
+                    }
             }
-            
-            // Google Map view
-            GoogleMapView(mapView: $mapView, userLocation: $navManager.userLocation)
-                .edgesIgnoringSafeArea(.bottom)
-                .onAppear {
-                    let companyName = "Your Company Name"
-                    // Show Terms & Conditions. The accepted value sets isNavigationEnabled.
-                    GMSNavigationServices.showTermsAndConditionsDialogIfNeeded(withCompanyName: companyName) { accepted in
-                        mapView.isNavigationEnabled = accepted
-                    }
-                    navManager.requestPermission()
-                    
-                    if selectedCurvatureThreshold != .noCurve {
-                        loadLocalKML()
-                    }
-                }
+            .padding()
+            .font(.system(size: 16, weight: .semibold, design: .rounded))
+            .foregroundColor(.white)
         }
-        // Overlay to indicate navigation state
+        // Overlay for navigation state
         .overlay(
             VStack {
                 if navManager.isNavigating {
@@ -431,48 +534,51 @@ struct RouteView: View {
         )
     }
     
-    // MARK: - Generate a Round Trip Route (and display it on the map)
+    // MARK: - Route Generation and Utility Methods
     private func generateRoute() {
         guard let userLoc = navManager.userLocation else {
             print("User location not available.")
             return
         }
-        
-        // Save the starting location.
         startLocation = userLoc
-        
-        // For a round-trip, take half the total trip distance for the outbound leg.
         let totalMiles = Double(selectedTime) / 30.0 * 5.0
         let outboundMiles = totalMiles / 2.0
         
-        var dest: CLLocationCoordinate2D?
-        
-        switch selectedCurvatureThreshold {
-        case .noCurve:
-            dest = randomCoordinate(from: userLoc, withinMiles: outboundMiles)
-        case .lessCurved, .moreCurved:
-            dest = randomCoordinateOnCurvyRoads(
-                origin: userLoc,
-                maxDistanceMiles: outboundMiles,
-                roadSegments: roadSegments
-            )
+        if selectedElevationOption == .noElevation {
+            var dest: CLLocationCoordinate2D?
+            switch selectedCurvatureThreshold {
+            case .noCurve:
+                dest = randomCoordinate(from: userLoc, withinMiles: outboundMiles)
+            case .lessCurved, .moreCurved:
+                dest = randomCoordinateOnCurvyRoads(origin: userLoc, maxDistanceMiles: outboundMiles, roadSegments: roadSegments)
+            }
+            guard let destination = dest else {
+                print("Failed to generate destination.")
+                return
+            }
+            self.destination = destination
+            proceedWithRouteGeneration(from: userLoc, to: destination)
+        } else {
+            generateCandidateRoute(userLoc: userLoc, outboundMiles: outboundMiles, attempt: 1, maxAttempts: 5) { candidate in
+                guard let candidate = candidate else {
+                    print("Failed to generate candidate route with elevation preferences.")
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.destination = candidate
+                    self.proceedWithRouteGeneration(from: userLoc, to: candidate)
+                }
+            }
         }
-        
-        guard let destination = dest else {
-            print("Failed to generate destination.")
-            return
-        }
-        self.destination = destination
-        
-        // Clear any existing polylines.
+    }
+    
+    private func proceedWithRouteGeneration(from origin: CLLocationCoordinate2D, to destination: CLLocationCoordinate2D) {
         outboundPolyline?.map = nil
         returnPolyline?.map = nil
         combinedPolyline?.map = nil
         
-        // Fetch both outbound and return routes.
-        fetchRoundTripRoutes(from: userLoc, to: destination) { outboundPath, returnPath in
+        fetchRoundTripRoutes(from: origin, to: destination) { outboundPath, returnPath in
             if let outPath = outboundPath, let retPath = returnPath {
-                // Combine the two paths into one round-trip route.
                 let combinedPath = GMSMutablePath()
                 for i in 0..<outPath.count() {
                     combinedPath.add(outPath.coordinate(at: i))
@@ -481,14 +587,12 @@ struct RouteView: View {
                     combinedPath.add(retPath.coordinate(at: i))
                 }
                 DispatchQueue.main.async {
-                    // Draw the combined route in purple.
                     let polyline = GMSPolyline(path: combinedPath)
                     polyline.strokeColor = .purple
                     polyline.strokeWidth = 5.0
                     polyline.map = mapView
                     self.combinedPolyline = polyline
                     
-                    // Adjust camera to show the entire route.
                     var bounds = GMSCoordinateBounds()
                     for i in 0..<combinedPath.count() {
                         bounds = bounds.includingCoordinate(combinedPath.coordinate(at: i))
@@ -502,8 +606,62 @@ struct RouteView: View {
         }
     }
     
-    /// Fetches both an outbound route (origin -> destination) and a return route (destination -> origin)
-    /// using the Directions API (with alternatives), then chooses a pair that minimizes overlap.
+    private func generateCandidateRoute(userLoc: CLLocationCoordinate2D, outboundMiles: Double, attempt: Int, maxAttempts: Int, completion: @escaping (CLLocationCoordinate2D?) -> Void) {
+        var candidate: CLLocationCoordinate2D?
+        if selectedCurvatureThreshold == .noCurve {
+            candidate = randomCoordinate(from: userLoc, withinMiles: outboundMiles)
+        } else {
+            candidate = randomCoordinateOnCurvyRoads(origin: userLoc, maxDistanceMiles: outboundMiles, roadSegments: roadSegments)
+        }
+        guard let candidateCoord = candidate else {
+            completion(nil)
+            return
+        }
+        getElevation(for: userLoc) { startElevation in
+            guard let startElevation = startElevation else { completion(candidateCoord); return }
+            self.getElevation(for: candidateCoord) { candidateElevation in
+                guard let candidateElevation = candidateElevation else { completion(candidateCoord); return }
+                let elevationDifference = abs(candidateElevation - startElevation)
+                let thresholdLess = 20.0
+                let thresholdMore = 50.0
+                var conditionMet = false
+                switch self.selectedElevationOption {
+                case .lessElevation:
+                    conditionMet = elevationDifference <= thresholdLess
+                case .moreElevation:
+                    conditionMet = elevationDifference >= thresholdMore
+                default:
+                    conditionMet = true
+                }
+                if conditionMet {
+                    completion(candidateCoord)
+                } else if attempt < maxAttempts {
+                    self.generateCandidateRoute(userLoc: userLoc, outboundMiles: outboundMiles, attempt: attempt + 1, maxAttempts: maxAttempts, completion: completion)
+                } else {
+                    completion(candidateCoord)
+                }
+            }
+        }
+    }
+    
+    private func getElevation(for coordinate: CLLocationCoordinate2D, completion: @escaping (Double?) -> Void) {
+        let apiKey = "AIzaSyCR4UzC0O1xZRP2Jf8A6LIShdThU4Znir0"
+        let urlString = "https://maps.googleapis.com/maps/api/elevation/json?locations=\(coordinate.latitude),\(coordinate.longitude)&key=\(apiKey)"
+        guard let url = URL(string: urlString) else { completion(nil); return }
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error { print("Elevation API error: \(error)"); completion(nil); return }
+            guard let data = data else { completion(nil); return }
+            do {
+                let elevationResponse = try JSONDecoder().decode(ElevationResponse.self, from: data)
+                let elevation = elevationResponse.results.first?.elevation
+                completion(elevation)
+            } catch {
+                print("Elevation decoding error: \(error)")
+                completion(nil)
+            }
+        }.resume()
+    }
+    
     private func fetchRoundTripRoutes(from origin: CLLocationCoordinate2D,
                                       to destination: CLLocationCoordinate2D,
                                       completion: @escaping (GMSPath?, GMSPath?) -> Void) {
@@ -512,18 +670,16 @@ struct RouteView: View {
                 if let pair = self.chooseDisjointPair(outboundPaths: outboundPaths, returnPaths: returnPaths) {
                     completion(pair.outbound, pair.return)
                 } else {
-                    // Fallback: use the first available routes.
                     completion(outboundPaths.first, returnPaths.first)
                 }
             }
         }
     }
     
-    /// Helper: Fetches an array of routes (as GMSPath) from the Directions API.
     private func fetchRoutes(from origin: CLLocationCoordinate2D,
                              to destination: CLLocationCoordinate2D,
                              completion: @escaping ([GMSPath]) -> Void) {
-        let apiKey = "YOUR_GOOGLE_MAPS_API_KEY"
+        let apiKey = "AIzaSyCR4UzC0O1xZRP2Jf8A6LIShdThU4Znir0"
         var urlComponents = URLComponents(string: "https://maps.googleapis.com/maps/api/directions/json")!
         urlComponents.queryItems = [
             URLQueryItem(name: "origin", value: "\(origin.latitude),\(origin.longitude)"),
@@ -531,24 +687,14 @@ struct RouteView: View {
             URLQueryItem(name: "alternatives", value: "true"),
             URLQueryItem(name: "key", value: apiKey)
         ]
-        
         guard let url = urlComponents.url else {
             print("Failed to create URL for directions request.")
             completion([])
             return
         }
-        
         URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("Error fetching directions: \(error)")
-                completion([])
-                return
-            }
-            guard let data = data else {
-                print("No data returned from directions request.")
-                completion([])
-                return
-            }
+            if let error = error { print("Error fetching directions: \(error)"); completion([]); return }
+            guard let data = data else { print("No data returned from directions request."); completion([]); return }
             do {
                 let decoder = JSONDecoder()
                 let directionsResponse = try decoder.decode(GoogleDirectionsResponse.self, from: data)
@@ -569,12 +715,10 @@ struct RouteView: View {
         }.resume()
     }
     
-    /// Chooses a pair of outbound and return paths that minimizes overlap.
     private func chooseDisjointPair(outboundPaths: [GMSPath],
                                     returnPaths: [GMSPath]) -> (outbound: GMSPath, `return`: GMSPath)? {
         var bestPair: (GMSPath, GMSPath)?
         var bestScore: Double = Double.greatestFiniteMagnitude
-        
         for outPath in outboundPaths {
             for retPath in returnPaths {
                 let score = overlapScore(path1: outPath, path2: retPath)
@@ -587,7 +731,6 @@ struct RouteView: View {
         return bestPair
     }
     
-    /// A simple heuristic that counts points in path1 within 50 meters of any point in path2.
     private func overlapScore(path1: GMSPath, path2: GMSPath) -> Double {
         var score: Double = 0
         for i in 0..<path1.count() {
@@ -595,72 +738,48 @@ struct RouteView: View {
             for j in 0..<path2.count() {
                 let coord2 = path2.coordinate(at: j)
                 let d = distanceBetween(coord1.latitude, coord1.longitude, coord2.latitude, coord2.longitude)
-                if d < 50 { // 50-meter threshold
-                    score += 1
-                    break
-                }
+                if d < 50 { score += 1; break }
             }
         }
         return score
     }
     
-    /// Original random bearing approach for "No Curve"
     private func randomCoordinate(from origin: CLLocationCoordinate2D,
                                   withinMiles distanceMiles: Double) -> CLLocationCoordinate2D {
         let distanceMeters = distanceMiles * 1609.34
         let bearing = Double.random(in: 0..<360) * .pi / 180
         let earthRadius: Double = 6378137
         let angularDistance = distanceMeters / earthRadius
-        
         let lat1 = origin.latitude * .pi / 180
         let lon1 = origin.longitude * .pi / 180
-        
-        let lat2 = asin(sin(lat1) * cos(angularDistance)
-                        + cos(lat1) * sin(angularDistance) * cos(bearing))
+        let lat2 = asin(sin(lat1) * cos(angularDistance) +
+                        cos(lat1) * sin(angularDistance) * cos(bearing))
         let lon2 = lon1 + atan2(sin(bearing) * sin(angularDistance) * cos(lat1),
                                 cos(angularDistance) - sin(lat1) * sin(lat2))
-        
-        return CLLocationCoordinate2D(
-            latitude: lat2 * 180 / .pi,
-            longitude: lon2 * 180 / .pi
-        )
+        return CLLocationCoordinate2D(latitude: lat2 * 180 / .pi, longitude: lon2 * 180 / .pi)
     }
     
-    /// Curvy approach: pick a random coordinate from loaded road segments.
-    private func randomCoordinateOnCurvyRoads(
-        origin: CLLocationCoordinate2D,
-        maxDistanceMiles: Double,
-        roadSegments: [RoadSegment]
-    ) -> CLLocationCoordinate2D? {
-        
+    private func randomCoordinateOnCurvyRoads(origin: CLLocationCoordinate2D,
+                                               maxDistanceMiles: Double,
+                                               roadSegments: [RoadSegment]) -> CLLocationCoordinate2D? {
         let maxDistanceMeters = maxDistanceMiles * 1609.34
         let nearbySegments = roadSegments.filter { seg in
-            let dist = distanceBetween(
-                origin.latitude, origin.longitude,
-                seg.midpoint.latitude, seg.midpoint.longitude
-            )
+            let dist = distanceBetween(origin.latitude, origin.longitude,
+                                       seg.midpoint.latitude, seg.midpoint.longitude)
             return dist <= maxDistanceMeters
         }
-        
-        guard !nearbySegments.isEmpty else {
+        guard !nearbySegments.isEmpty,
+              let chosenSegment = nearbySegments.randomElement(),
+              let randomCoord = chosenSegment.randomCoordinate() else {
             print("No segments found within \(maxDistanceMiles) miles.")
             return nil
         }
-        
-        guard let chosenSegment = nearbySegments.randomElement(),
-              let randomCoord = chosenSegment.randomCoordinate()
-        else {
-            return nil
-        }
-        
         return randomCoord
     }
     
-    // MARK: - Load Local KML (for lessCurved / moreCurved)
     private func loadLocalKML() {
         let subfolder: String
         let kmlFileName: String
-        
         switch selectedCurvatureThreshold {
         case .lessCurved:
             subfolder   = "CurvatureData/great-britain.c_300/great-britain"
@@ -671,16 +790,12 @@ struct RouteView: View {
         case .noCurve:
             return
         }
-        
-        guard let kmlURL = Bundle.main.url(
-            forResource: kmlFileName,
-            withExtension: "kml",
-            subdirectory: subfolder
-        ) else {
+        guard let kmlURL = Bundle.main.url(forResource: kmlFileName,
+                                           withExtension: "kml",
+                                           subdirectory: subfolder) else {
             print("Could not find \(kmlFileName).kml in \(subfolder).")
             return
         }
-        
         let parser = KMLParser()
         if let lines = parser.parseKML(from: kmlURL) {
             let segments = lines.compactMap { RoadSegment.fromKMLLineString($0) }
